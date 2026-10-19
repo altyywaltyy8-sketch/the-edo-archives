@@ -69,8 +69,8 @@
   ];  window.addEventListener('edo:authenticated',e=>{
     user=e.detail.user;document.body.classList.remove('show-login');
     const assigned=Array.isArray(e.detail.assigned)?e.detail.assigned:[];
-    const original=assigned.find(item=>['E-A','E-B','E-C'].includes(item.id));
-    const scrapIndex=original?{'E-A':0,'E-B':1,'E-C':2}[original.id]:null;
+    const original=assigned.find(item=>['E-A','E-B','E-C'].includes(String(item.id||'').trim().toUpperCase()));
+    const scrapIndex=original?{'E-A':0,'E-B':1,'E-C':2}[String(original.id).trim().toUpperCase()]:null;
     if(scrapIndex===null)return;
     const [title,clue]=scraps[scrapIndex];
     const el=document.getElementById('blog-scrap');el.hidden=false;
