@@ -19,7 +19,9 @@
 <script defer="" src="multiplayer.js"></script>
 <script defer="" src="kr-chat.js"></script>
 <script defer="" src="y2k-extras.js"></script>
-<script defer="" src="blog-nav-v3.js?v=code-reentry-20261019-1"></script>
+<script defer="" src="blog-nav-v3.js?v=investigator-chat-1"></script>
+<link href="investigator-chat.css?v=1" rel="stylesheet"/>
+<script defer src="investigator-chat.js?v=1"></script>
 </head>
 <body>
 <div class="blog-front" id="blog-front">
@@ -132,6 +134,16 @@
 </form></div></div>
 <div class="kr-chat-footer"><span>✧ expressions</span><span>✧ buddy list</span><span>✧ message archive</span><span class="kr-connection">▂▄▆█</span></div>
 </section>
+<div id="investigator-chat-widget" class="investigator-chat-widget">
+  <button id="investigator-chat-toggle" class="investigator-chat-toggle" type="button" aria-expanded="false" aria-controls="investigator-chat-panel">✉ Investigator Chat</button>
+  <section id="investigator-chat-panel" class="investigator-chat-panel" aria-label="Investigator group chat" hidden>
+    <header class="investigator-chat-header"><strong>✧ investigator chat ✧</strong><button id="investigator-chat-close" type="button" aria-label="Close investigator chat">×</button></header>
+    <p class="investigator-chat-note">shared room · messages saved · use a codename, not personal details</p>
+    <div id="investigator-chat-status" class="investigator-chat-status" role="status">Sign in to join the other investigators.</div>
+    <div id="investigator-chat-log" class="investigator-chat-log" aria-live="polite" aria-label="Shared messages"></div>
+    <form id="investigator-chat-form" class="investigator-chat-form"><label class="sr-only" for="investigator-chat-message">Your message</label><input id="investigator-chat-message" type="text" maxlength="500" placeholder="message the investigators..." autocomplete="off" required disabled/><button type="submit" disabled>send ♡</button></form>
+  </section>
+</div>
 </body>
 </html>
 
