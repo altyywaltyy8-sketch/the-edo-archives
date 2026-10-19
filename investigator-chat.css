@@ -1,0 +1,18 @@
+/* Floating shared chat, separate from K.R.'s scripted messages */
+.investigator-chat-widget{position:fixed;right:16px;bottom:16px;z-index:99999;font-family:Arial,sans-serif;font-size:13px;color:#4b3149}
+.investigator-chat-toggle{background:#f4d6ee;border:2px solid #a56e9e;box-shadow:3px 4px 0 #755676;border-radius:15px;padding:12px 16px;font-weight:bold;color:#63365d;cursor:pointer}
+.investigator-chat-panel{width:min(350px,calc(100vw - 32px));height:min(490px,calc(100dvh - 100px));display:flex;flex-direction:column;background:#fff6fd;border:2px solid #9e749f;border-radius:12px;overflow:hidden;box-shadow:0 10px 35px #24122c55;margin-bottom:12px}
+.investigator-chat-panel[hidden]{display:none!important}
+.investigator-chat-header{background:#c7a1c9;padding:11px;display:flex;justify-content:space-between;align-items:center;color:#30223a}
+.investigator-chat-header button{border:0;background:transparent;font-size:23px;cursor:pointer;color:#30223a}
+.investigator-chat-note{margin:0;padding:8px 10px;background:#f8e8f5;font-size:11px}
+.investigator-chat-status{padding:7px 10px;font-size:11px;color:#714c70}
+.investigator-chat-log{flex:1;min-height:0;overflow-y:auto;padding:10px;display:flex;flex-direction:column;gap:8px}
+.investigator-chat-entry{padding:7px 9px;background:white;border:1px solid #ebd4e9;border-radius:8px;overflow-wrap:anywhere}
+.investigator-chat-entry strong{color:#774577}
+.investigator-chat-entry time{font-size:10px;color:#806e7c;margin-left:8px}
+.investigator-chat-entry p{margin:4px 0 0;white-space:pre-wrap}
+.investigator-chat-form{display:flex;gap:5px;padding:9px;background:#f5e1f1}
+.investigator-chat-form input{min-width:0;flex:1;border:1px solid #b48eb4;border-radius:5px;padding:8px;background:#fff;color:#35283a}
+.investigator-chat-form button{border:1px solid #9b699c;border-radius:5px;background:#e9c5e5;color:#3e2443;padding:8px;cursor:pointer}
+.investigator-chat-form button:disabled{opacity:.5;cursor:not-allowed}
