@@ -16,7 +16,34 @@
     if(animate){transition.hidden=false;setTimeout(()=>{document.body.classList.add('archive-open');guestOriginal.append(guest);transition.hidden=true;location.hash='home';window.dispatchEvent(new Event('edo:archive-unlocked'));},1900)}
     else {document.body.classList.add('archive-open');guestOriginal.append(guest);window.dispatchEvent(new Event('edo:archive-unlocked'));}
   }
-  if(saved())showArchive(false);else {guestMount.append(guest);guest.hidden=false;guest.classList.add('visible');}
+  function returnToBlog(){
+    // Only switch the view. Do not remove the unlock flag, reset auth, or touch chat history.
+    if(!saved())return;
+    document.body.classList.remove('archive-open','show-login');
+    if(overlay)overlay.hidden=true;
+    guestMount.append(guest);
+    guest.hidden=false;
+    guest.classList.add('visible');
+    document.getElementById('blog-archive-shortcut').hidden=false;
+    location.hash='blog-home';
+    navigate();
+    window.scrollTo(0,0);
+  }
+  function returnToArchive(){
+    if(!saved())return;
+    showArchive(false);
+    location.hash='home';
+    window.scrollTo(0,0);
+  }
+  document.getElementById('return-to-blog').addEventListener('click',returnToBlog);
+  document.getElementById('return-to-archive').addEventListener('click',returnToArchive);
+  if(saved()){
+    document.getElementById('blog-archive-shortcut').hidden=false;
+    // Keep the selected view on refresh if the visitor deliberately returned to the blog.
+    if(location.hash.startsWith('#blog-')){
+      guestMount.append(guest);guest.hidden=false;guest.classList.add('visible');
+    } else showArchive(false);
+  }else {guestMount.append(guest);guest.hidden=false;guest.classList.add('visible');}
   function navigate(){
     if(document.body.classList.contains('archive-open'))return;
     const hash=location.hash;
@@ -52,7 +79,7 @@
     const value=input.value.toLowerCase().trim().replace(/[^a-z0-9]/g,'');
     if(value==='lilacmoon071'){
       try{localStorage.setItem(KEY,'open')}catch{}
-      feedback.textContent='the wallpaper is peeling away...';showArchive(true);
+      feedback.textContent='the wallpaper is peeling away...';document.getElementById('blog-archive-shortcut').hidden=false;showArchive(true);
     }else{feedback.textContent='that doesn’t open anything. maybe the scraps belong together?';}
   }
   document.getElementById('blog-unlock').addEventListener('click',tryUnlock);
