@@ -60,7 +60,7 @@
         evidenceBox.append(article);
       }
       if (!assigned.length && initial?.length) desk.append(element('p','', 'Assignment pending publication.'));
-      window.dispatchEvent(new CustomEvent("edo:authenticated", {detail:{user}}));
+      window.dispatchEvent(new CustomEvent("edo:authenticated", {detail:{user, assigned}}));
     } catch (e) {
       desk.textContent = `Unable to load your investigator desk: ${e.message}`;
     }
