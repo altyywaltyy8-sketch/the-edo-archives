@@ -68,8 +68,11 @@
     ['SCRAP C / Customization', 'What flower would Kiana choose to decorate her corner? Look closely at the details of her page.']
   ];  window.addEventListener('edo:authenticated',e=>{
     user=e.detail.user;document.body.classList.remove('show-login');
-    const digits=(user.id||'').replace(/-/g,'');let hash=0;for(const c of digits)hash=(hash*31+c.charCodeAt(0))>>>0;
-    const [title,clue]=scraps[hash%3];
+    const assigned=Array.isArray(e.detail.assigned)?e.detail.assigned:[];
+    const original=assigned.find(item=>['E-A','E-B','E-C'].includes(item.id));
+    const scrapIndex=original?{'E-A':0,'E-B':1,'E-C':2}[original.id]:null;
+    if(scrapIndex===null)return;
+    const [title,clue]=scraps[scrapIndex];
     const el=document.getElementById('blog-scrap');el.hidden=false;
     el.replaceChildren();const strong=document.createElement('strong');strong.textContent=title;
     const p=document.createElement('p');p.textContent=clue;
