@@ -13,10 +13,11 @@
   const storageKey = 'edo-archive-kr-chat-v2';
   const defaults = {introNotified:false,introOpened:false,introFinished:false,archiveUnlocked:false,archiveNotified:false,archiveOpened:false,archiveFinished:false,errorShown:false,lines:[]};
   let state = load();
+  let activeAccountId = null;
   let user = null, db = null, timers = [], animating = false;
-  function load() { try {const data=JSON.parse(localStorage.getItem(storageKey)||'null');return {...defaults,...(data&&typeof data==='object'?data:{}) ,lines:Array.isArray(data?.lines)?data.lines.slice(-80):[]};}catch{return {...defaults,lines:[]};} }
+  function load(key=storageKey) { try {const data=JSON.parse(localStorage.getItem(key)||'null');return {...defaults,...(data&&typeof data==='object'?data:{}) ,lines:Array.isArray(data?.lines)?data.lines.slice(-80):[]};}catch{return {...defaults,lines:[]};} }
   function save() {
-    try {localStorage.setItem(storageKey,JSON.stringify(state));} catch {}
+    try {localStorage.setItem(activeAccountId ? `${storageKey}:user:${activeAccountId}` : storageKey,JSON.stringify(state));} catch {}
     if (db && user) db.auth.updateUser({data:{kr_chat_state_v2:state}}).catch(()=>{});
   }
   function add(role,text) {
@@ -106,20 +107,25 @@
     observer.observe(unsealed,{attributes:true,attributeFilter:['hidden']});
     if(!unsealed.hidden)unlock();
   }
-  window.addEventListener('edo:authenticated',async event=>{
-    user=event.detail.user;
-    const cfg=window.EDO_CONFIG||{};
-    if(window.supabase&&cfg.supabaseUrl&&cfg.supabaseAnonKey) {
-      // Separate client only for cross-device transcript synchronization.
-      // Supabase auth uses the same localStorage session by project URL.
-      db=window.supabase.createClient(cfg.supabaseUrl,cfg.supabaseAnonKey,{auth:{storageKey:'edo-kr-sync-auth',persistSession:false,autoRefreshToken:false}});
-      // Use the authenticated account's user metadata from the existing auth flow instead.
-      db=null;
-    }
-    const remote=user.user_metadata?.kr_chat_state_v2;
-    if(remote && Array.isArray(remote.lines) && remote.lines.length>state.lines.length){
-      state={...defaults,...remote,lines:remote.lines.slice(-80)};save();render();
-    }
+  window.addEventListener('edo:authenticated',event=>{
+    const nextUser=event.detail?.user;
+    if(!nextUser?.id)return;
+    user=nextUser;
+    if(activeAccountId===nextUser.id)return;
+    // K.R. history belongs to the investigator, not the shared browser.
+    clearTimers();
+    activeAccountId=nextUser.id;
+    const accountKey=`${storageKey}:user:${activeAccountId}`;
+    const stored=localStorage.getItem(accountKey);
+    const remote=nextUser.user_metadata?.kr_chat_state_v2;
+    state=stored ? load(accountKey) : (remote && Array.isArray(remote.lines) ?
+      {...defaults,...remote,lines:remote.lines.slice(-80)} : {...defaults,lines:[]});
+    toast.hidden=true;
+    chat.hidden=true;
+    render();syncInput();
+    // New accounts get the welcome even when an older account used this browser.
+    if(!state.introNotified)later(startIntro,450);
+    else if(state.archiveUnlocked&&!state.archiveNotified)later(startArchive,450);
   });
   render();syncInput();
   // Wait until DOM and other scripts settle; the welcome is a public first-visit event.
