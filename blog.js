@@ -18,7 +18,9 @@
   }
   function returnToBlog(){
     // Only switch the view. Do not remove the unlock flag, reset auth, or touch chat history.
-    if(!saved())return;
+    // Switching views is always allowed when the archive is already visible.
+    // Older unlock flows may not have set the blog-stage localStorage key.
+    try { localStorage.setItem(KEY,'open'); } catch {}
     document.body.classList.remove('archive-open','show-login');
     if(overlay)overlay.hidden=true;
     guestMount.append(guest);
@@ -30,7 +32,7 @@
     window.scrollTo(0,0);
   }
   function returnToArchive(){
-    if(!saved())return;
+    try { localStorage.setItem(KEY,'open'); } catch {}
     showArchive(false);
     location.hash='home';
     window.scrollTo(0,0);
@@ -40,7 +42,7 @@
   if(saved()){
     document.getElementById('blog-archive-shortcut').hidden=false;
     // Keep the selected view on refresh if the visitor deliberately returned to the blog.
-    if(location.hash.startsWith('#blog-')){
+    if(location.hash.startsWith('#blog-') || location.hash==='#guestbook'){
       guestMount.append(guest);guest.hidden=false;guest.classList.add('visible');
     } else showArchive(false);
   }else {guestMount.append(guest);guest.hidden=false;guest.classList.add('visible');}
