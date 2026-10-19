@@ -87,3 +87,6 @@ revoke all on function public.submit_intro_key(text) from public;
 grant execute on function public.claim_initial_evidence() to authenticated;
 grant execute on function public.my_evidence() to authenticated;
 grant execute on function public.submit_intro_key(text) to authenticated;
+
+grant execute on function public.my_evidence() to authenticated;
+grant execute on function public.submit_intro_key(text) to authenticated;
