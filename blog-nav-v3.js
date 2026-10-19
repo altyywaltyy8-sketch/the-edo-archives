@@ -63,10 +63,11 @@
   // New players see one of three different scrapbook fragments, determined by their investigator account.
   // The shared public posts contain supporting clues. Comparing fragments is the intended cooperative path.
   const scraps=[
-    ['SCRAP A / Birthday Blues :(', 'Think about who was missing from the ball. How many times did they appear in that photo? Write the answer as a word.'],
-    ['SCRAP B / Movement matters!', 'Remember the chess lesson? Read the square the white pawn moved to. Aurelio would call it a coordinate.'],
-    ['SCRAP C / Customization', 'What flower would Kiana choose to decorate her corner? Look closely at the details of her page.']
-  ];  window.addEventListener('edo:authenticated',e=>{
+    ['SCRAP A / Birthday Blues :(', 'I was sad about something...'],
+    ['SCRAP B / Movement matters!', 'What did Aurelio refer to them as...? Coordinates...?'],
+    ['SCRAP C / Customization', 'I hope you decorated my scrapbook!']
+  ];
+  window.addEventListener('edo:authenticated',e=>{
     user=e.detail.user;document.body.classList.remove('show-login');
     const assigned=Array.isArray(e.detail.assigned)?e.detail.assigned:[];
     const original=assigned.find(item=>['E-A','E-B','E-C'].includes(String(item.id||'').trim().toUpperCase()));
