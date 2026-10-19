@@ -1,4 +1,4 @@
-/* Multiplayer layer for The Edo Inquiry. Requires Supabase project configuration. */
+/* Multiplayer layer for The Edo Archive. Requires Supabase project configuration. */
 (() => {
   const config = window.EDO_CONFIG || {};
   const configured = /^https:\/\//.test(config.supabaseUrl) && !config.supabaseAnonKey.startsWith('YOUR_');
@@ -13,6 +13,7 @@
   const signout = document.getElementById('sign-out');
   let db;
   let busy = false;
+  // K.R. chat is managed by kr-chat.js. Auth is left independent.
   const msg = (s) => { feedback.textContent = s; };
   function element(tag, className, content) {
     const e = document.createElement(tag);
@@ -59,6 +60,7 @@
         evidenceBox.append(article);
       }
       if (!assigned.length && initial?.length) desk.append(element('p','', 'Assignment pending publication.'));
+      window.dispatchEvent(new CustomEvent("edo:authenticated", {detail:{user}}));
     } catch (e) {
       desk.textContent = `Unable to load your investigator desk: ${e.message}`;
     }
@@ -73,16 +75,7 @@
       if (mode === 'register') {
         const name = codename.value.trim();
         if (name.length < 2 || name.length > 30) throw new Error('Choose a codename of 2–30 characters.');
-        
-const {data,error} = await db.auth.signUp({
-  email: addr,
-  password: pass,
-  options: {
-    data: { codename: name },
-    emailRedirectTo: "https://altyywaltyy8-sketch.github.io/the-edo-archives/"
-  }
-});
-
+        const {data,error} = await db.auth.signUp({email:addr,password:pass,options:{data:{codename:name}}});
         if (error) throw error;
         if (!data.session) {msg('Check your email to confirm registration, then return to sign in.');return;}
         await refresh();
