@@ -4,3 +4,5 @@
 .return-to-blog:hover,.return-to-blog:focus-visible{background:#f9d7ec;outline:2px solid #a479a6;outline-offset:2px}
 #blog-archive-shortcut[hidden]{display:none!important}
 
+/* New photo diary entries: show entire photos, keep their natural proportions. */
+#blog-home .blog-post img[src^="images/"]{width:100%;height:auto;max-height:none;object-fit:contain;padding:5px;box-sizing:border-box;}
