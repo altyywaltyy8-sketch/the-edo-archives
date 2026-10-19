@@ -79,13 +79,23 @@
     el.append(strong,p);
     signIn.textContent='signed in! scrapbook scrap unlocked ✧';
   });
-  function tryUnlock(){
-    const value=input.value.toLowerCase().trim().replace(/[^a-z0-9]/g,'');
+  // Always allow code entry, including for accounts that previously unlocked the archive.
+  // The shortcut and the code are independent ways to reach the archive.
+  function tryUnlock(event){
+    if(event)event.preventDefault();
+    const value=String(input.value || '').toLowerCase().replace(/[^a-z0-9]/g,'');
     if(value==='zerod3rose' || value==='zerod4rose'){
       try{localStorage.setItem(KEY,'open')}catch{}
-      feedback.textContent='the wallpaper is peeling away...';document.getElementById('blog-archive-shortcut').hidden=false;showArchive(true);
-    }else{feedback.textContent='that doesn’t open anything. maybe the scraps belong together?';}
+      feedback.textContent='the wallpaper is peeling away...';
+      document.getElementById('blog-archive-shortcut').hidden=false;
+      // Reset the overlay before each entry so a previous unlock never blocks the animation.
+      transition.hidden=true;
+      showArchive(true);
+    }else{
+      feedback.textContent='that doesn’t open anything. maybe the scraps belong together?';
+    }
   }
   document.getElementById('blog-unlock').addEventListener('click',tryUnlock);
-  input.addEventListener('keydown',e=>{if(e.key==='Enter')tryUnlock()});
+  input.addEventListener('keydown',e=>{if(e.key==='Enter')tryUnlock(e)});
+
 })();
