@@ -1,0 +1,12 @@
+/* Kiana's private audio attachment — secret archive only */
+.voicemail-file{margin:25px 0 30px;padding:0 0 18px;border:1px solid #637369;background:#25302c;color:#e5e8df;box-shadow:5px 5px 0 rgba(0,0,0,.18)}
+.voicemail-file-top{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;background:#3c4a43;padding:9px 14px;color:#c9d5c9;font:11px monospace;letter-spacing:.06em}
+.voicemail-file>.eyebrow{padding:18px 19px 0;color:#aebfb3}
+.voicemail-file h2{font-family:Georgia,serif;font-weight:normal;text-transform:none;letter-spacing:0;font-size:clamp(21px,4vw,29px);padding:5px 19px 0;margin:0;color:#f0e9dc}
+.voicemail-kiana-note{padding:8px 19px 12px;font-size:15px;line-height:1.75;color:#d7e0d8}
+.voicemail-kiana-note p{margin:10px 0}
+.voicemail-kiana-note .voicemail-signature{text-align:right;font-style:italic;color:#b8c9bd}
+.voicemail-player-wrap{margin:0 19px;padding:12px;background:#34423a;border:1px solid #5b6b5f}
+.voicemail-player-label{font:11px monospace;color:#c3d5c7;margin-bottom:9px;letter-spacing:.08em}
+.voicemail-player-wrap audio{width:100%;display:block;min-height:42px}
+@media(max-width:550px){.voicemail-file-top{font-size:10px}.voicemail-kiana-note{font-size:14px}}
