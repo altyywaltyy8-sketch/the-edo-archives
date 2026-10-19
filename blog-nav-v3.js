@@ -63,11 +63,10 @@
   // New players see one of three different scrapbook fragments, determined by their investigator account.
   // The shared public posts contain supporting clues. Comparing fragments is the intended cooperative path.
   const scraps=[
-    ['SCRAP A / FAVORITE COLOR','The first part of the key is the color of the notebook in the October 12 photo. It is not just purple.'],
-    ['SCRAP B / DREAM JOURNAL','The middle part of the key is the shape in the sky in the October 9 photo.'],
-    ['SCRAP C / PHOTO ALBUM','The final part is the three-digit label on the October 7 photograph. Keep the leading zero.']
-  ];
-  window.addEventListener('edo:authenticated',e=>{
+    ['SCRAP A / Birthday Blues :(', 'Think about who was missing from the ball. How many times did they appear in that photo? Write the answer as a word.'],
+    ['SCRAP B / Movement matters!', 'Remember the chess lesson? Read the square the white pawn moved to. Aurelio would call it a coordinate.'],
+    ['SCRAP C / Customization', 'What flower would Kiana choose to decorate her corner? Look closely at the details of her page.']
+  ];  window.addEventListener('edo:authenticated',e=>{
     user=e.detail.user;document.body.classList.remove('show-login');
     const digits=(user.id||'').replace(/-/g,'');let hash=0;for(const c of digits)hash=(hash*31+c.charCodeAt(0))>>>0;
     const [title,clue]=scraps[hash%3];
@@ -79,7 +78,7 @@
   });
   function tryUnlock(){
     const value=input.value.toLowerCase().trim().replace(/[^a-z0-9]/g,'');
-    if(value==='lilacmoon071'){
+    if(value==='zerod3rose' || value==='zerod4rose'){
       try{localStorage.setItem(KEY,'open')}catch{}
       feedback.textContent='the wallpaper is peeling away...';document.getElementById('blog-archive-shortcut').hidden=false;showArchive(true);
     }else{feedback.textContent='that doesn’t open anything. maybe the scraps belong together?';}
