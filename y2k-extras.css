@@ -1,0 +1,46 @@
+/* 2000s personal-web extras: all assets rendered with CSS, no external GIFs */
+body, a, button, input, textarea {cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='28' height='28' viewBox='0 0 28 28'%3E%3Cpath d='M3 2 L3 22 L9 16 L14 25 L18 23 L13 14 L23 14 Z' fill='%23fff' stroke='%233b2767' stroke-width='2'/%3E%3C/svg%3E") 3 2,auto}
+a, button, [role=button]{cursor:pointer}
+.y2k-side-gif{margin:10px 0 7px;padding:8px 3px;background:repeating-linear-gradient(45deg,#dad0ea,#dad0ea 7px,#eee9f5 7px,#eee9f5 14px);border:2px ridge #8d7ba1;display:flex;align-items:center;justify-content:space-evenly;color:#6a477c;text-align:center;font:bold 11px/1.3 'Courier New',monospace;text-transform:uppercase}
+.y2k-star{font-size:25px;animation:y2k-spin 4s linear infinite;color:#b54b98;text-shadow:1px 1px #fff}
+.y2k-star:last-child{animation-direction:reverse}
+.y2k-stamp-stack{display:flex;flex-direction:column;gap:5px;margin:9px 0}
+.y2k-stamp{display:block;text-align:center;background:linear-gradient(90deg,#423d7d,#aa89b2,#423d7d);border:2px ridge #a79ab4;color:#fff;font:bold 10px 'Courier New',monospace;letter-spacing:.025em;padding:5px 2px;text-shadow:1px 1px #32283c}
+.y2k-stamp.pink{background:linear-gradient(90deg,#9a4c78,#e5b4d1,#9a4c78);color:#2e1930}
+.y2k-guestbook-link{display:block;text-align:center;background:linear-gradient(#fff,#d9d0e3);border:2px outset #b7a8bf;padding:8px;color:#4c376a;font:bold 11px Tahoma,sans-serif}
+.y2k-guestbook-link:hover{background:#f6e5f5}
+.y2k-announcement{background:#f9e7f1;border:2px dashed #b98daa;text-align:center;padding:8px;margin:12px 0;font:11px 'Courier New',monospace;color:#694565}
+.y2k-blink{animation:y2k-blink 1.3s steps(2,start) infinite;color:#a53572}
+.y2k-pixels{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0 18px}
+.y2k-badge{border:2px ridge #8a9c9a;background:linear-gradient(#e5f6f0,#b9ded0);padding:4px 7px;color:#35574e;font:bold 10px 'Courier New',monospace}
+.y2k-badge.purple{border-color:#aa96c0;background:linear-gradient(#f0e9fa,#d4c5e5);color:#534071}
+.y2k-badge.mint{animation:y2k-glow 2.2s ease-in-out infinite}
+.y2k-broken-media{display:flex;align-items:center;gap:12px;margin-top:18px;padding:10px 13px;background:#ece9ef;border:2px inset #c2b7ca;color:#5b4b6a;font:11px Tahoma,sans-serif}
+.y2k-broken-icon{font-size:28px;color:#9d8aaa}
+.y2k-broken-media strong,.y2k-broken-media small{display:block}
+.y2k-broken-media small{color:#7b7083}
+.y2k-broken-status{margin-left:auto;color:#a44d70}
+.y2k-footer-stamp{color:#744f87;font:bold 10px 'Courier New',monospace}
+.y2k-sparkle{color:#aa629e;animation:y2k-spin 5s linear infinite;display:inline-block}
+.y2k-guestbook-layout{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(220px,.8fr);gap:15px;margin-top:24px}
+.y2k-guestbook-entries{display:flex;flex-direction:column;gap:10px}
+.y2k-entry{background:#fff;border:2px ridge #b6adbe;box-shadow:2px 2px #d4cedb;padding:12px}
+.y2k-entry>div{display:flex;justify-content:space-between;gap:6px;border-bottom:1px dotted #b9aabe;padding-bottom:5px}
+.y2k-entry strong{color:#77518a;font:bold 12px Tahoma,sans-serif}
+.y2k-entry time{color:#85768b;font:10px Tahoma,sans-serif}
+.y2k-entry p{margin:9px 0 0;color:#433b4d;font:13px/1.6 Tahoma,sans-serif;overflow-wrap:anywhere}
+.y2k-user-entry{border-color:#91a899}
+.y2k-guestbook-form{align-self:start;background:#e8e1ed;border:2px ridge #b5a9bf;padding:12px;display:flex;flex-direction:column;gap:7px}
+.y2k-form-title{text-align:center;background:#594776;color:#fff;padding:7px;font:bold 11px Tahoma,sans-serif;margin-bottom:5px}
+.y2k-guestbook-form label{font:bold 11px Tahoma,sans-serif;color:#4c3a60}
+.y2k-guestbook-form input,.y2k-guestbook-form textarea{border:2px inset #bbb3c2;padding:9px;background:#fff;color:#2b2730;font:12px Tahoma,sans-serif;width:100%;box-sizing:border-box}
+.y2k-guestbook-form button{border:2px outset #b6acbf;background:linear-gradient(#fff,#d8d0e4);color:#43315e;padding:8px;font:bold 12px Tahoma,sans-serif}
+.y2k-guestbook-note{color:#6d6077;font:10px/1.5 Tahoma,sans-serif;margin:0}
+@keyframes y2k-spin{to{transform:rotate(360deg)}}
+@keyframes y2k-blink{50%{opacity:.25}}
+@keyframes y2k-glow{50%{filter:brightness(1.15);box-shadow:0 0 8px #c0e5d5}}
+@media(max-width:700px){.y2k-guestbook-layout{grid-template-columns:1fr}}
+@media(prefers-reduced-motion:reduce){.y2k-star,.y2k-blink,.y2k-badge.mint,.y2k-sparkle{animation:none}}
+.y2k-guestbook-state{font:11px/1.5 'Courier New',monospace;color:#625070;background:#f0ebf4;border:1px dotted #ab99b7;padding:8px;margin:3px 0}
+#guestbook-name[readonly]{background:#e9e4ed;color:#63556d}
+#guestbook-submit:disabled{opacity:.55;cursor:not-allowed}

@@ -1,0 +1,127 @@
+/* K.R. two-act instant messenger: blog welcome -> archive warning.
+   The transcript is stored locally, and synced to authenticated Supabase user metadata
+   when available. The secret-site transition dispatches 'edo:archive-unlocked'. */
+(() => {
+  const toast = document.getElementById('kr-toast');
+  const preview = document.getElementById('kr-toast-preview');
+  const chat = document.getElementById('kr-chat');
+  const messages = document.getElementById('kr-chat-messages');
+  const form = document.getElementById('kr-chat-form');
+  const input = document.getElementById('kr-chat-input');
+  const send = form.querySelector('button');
+  const status = document.getElementById('kr-buddy-status');
+  const storageKey = 'edo-archive-kr-chat-v2';
+  const defaults = {introNotified:false,introOpened:false,introFinished:false,archiveUnlocked:false,archiveNotified:false,archiveOpened:false,archiveFinished:false,errorShown:false,lines:[]};
+  let state = load();
+  let user = null, db = null, timers = [], animating = false;
+  function load() { try {const data=JSON.parse(localStorage.getItem(storageKey)||'null');return {...defaults,...(data&&typeof data==='object'?data:{}) ,lines:Array.isArray(data?.lines)?data.lines.slice(-80):[]};}catch{return {...defaults,lines:[]};} }
+  function save() {
+    try {localStorage.setItem(storageKey,JSON.stringify(state));} catch {}
+    if (db && user) db.auth.updateUser({data:{kr_chat_state_v2:state}}).catch(()=>{});
+  }
+  function add(role,text) {
+    if (state.lines.some(x=>x.role===role&&x.text===text) && role==='kr') return;
+    state.lines.push({role,text}); state.lines=state.lines.slice(-80);
+    render();save();
+  }
+  function render() {
+    messages.replaceChildren();
+    state.lines.forEach(({role,text})=>{
+      const el=document.createElement('p');
+      el.className=role==='kr'?'kr-bubble kr-in':role==='user'?'kr-bubble kr-out':role==='error'?'kr-error':'kr-system';
+      el.textContent=text; messages.append(el);
+    });
+    messages.scrollTop=messages.scrollHeight;
+  }
+  function setTyping(on) {
+    status.textContent=on?'status: typing…':'status: offline';
+    const previous=messages.querySelector('.kr-typing'); if(previous)previous.remove();
+    if(on){const e=document.createElement('p');e.className='kr-typing';e.textContent='K.R. is typing...';messages.append(e);messages.scrollTop=messages.scrollHeight;}
+  }
+  function later(fn,ms){timers.push(setTimeout(fn,ms));}
+  function clearTimers(){timers.forEach(clearTimeout);timers=[];animating=false;setTyping(false);}
+  function playSequence(lines,complete){
+    if(animating)return;
+    animating=true; input.disabled=true;send.disabled=true;
+    let index=0;
+    const next=()=>{
+      if(index>=lines.length){setTyping(false);animating=false;complete();syncInput();return;}
+      setTyping(true);
+      later(()=>{setTyping(false);add('kr',lines[index++]);later(next,700);},1200);
+    };
+    next();
+  }
+  function syncInput(){
+    const blocked=animating||state.errorShown;
+    input.disabled=blocked;send.disabled=blocked;
+    input.placeholder=state.errorShown?'Account unavailable': 'Type a message…';
+  }
+  function notify(text){preview.textContent=text;toast.hidden=false;}
+  function startIntro(){
+    if(state.introNotified)return;
+    state.introNotified=true;add('kr','hiya!!!');save();notify('hiya!!!');
+  }
+  function startArchive(){
+    if(!state.archiveUnlocked || !state.introFinished || state.archiveNotified)return;
+    state.archiveNotified=true;add('kr','r u sure?');save();notify('r u sure?');
+  }
+  function unlock(){
+    if(state.archiveUnlocked)return;
+    state.archiveUnlocked=true;save();
+    if(!state.introOpened){ // Don't lose the intro if the key was entered first.
+      startIntro();return;
+    }
+    if(!animating)startArchive();
+  }
+  function openChat(){
+    toast.hidden=true;chat.hidden=false;render();
+    if(!state.introOpened){
+      state.introOpened=true;save();
+      playSequence(['welcome to my site :3','enjoy your stay!!! <3'],()=>{
+        state.introFinished=true;save();startArchive();
+      });
+    } else if(state.archiveNotified&&!state.archiveOpened){
+      state.archiveOpened=true;save();
+      playSequence(['if u found this, then i guess u must be..','take your time. please. i need to know the truth, but i couldnt do it alone.'],()=>{
+        state.archiveFinished=true;save();
+      });
+    }
+    syncInput();
+    if(!input.disabled)input.focus();
+  }
+  document.getElementById('kr-toast-open').addEventListener('click',openChat);
+  document.getElementById('kr-chat-close').addEventListener('click',()=>{chat.hidden=true;});
+  form.addEventListener('submit',e=>{
+    e.preventDefault();const text=input.value.trim();if(!text||animating||state.errorShown)return;
+    add('user',text.slice(0,500));input.value='';
+    if(state.archiveOpened){
+      add('error','ERROR: ACCOUNT NOT FOUND');state.errorShown=true;save();syncInput();
+    } // Before the secret archive, K.R. is simply offline and never replies.
+  });
+  window.addEventListener('edo:archive-unlocked',unlock);
+  // Also supports the existing FILE 004 access port (and future archive UI).
+  const unsealed=document.getElementById('unsealed');
+  if(unsealed){
+    const observer=new MutationObserver(()=>{if(!unsealed.hidden)unlock();});
+    observer.observe(unsealed,{attributes:true,attributeFilter:['hidden']});
+    if(!unsealed.hidden)unlock();
+  }
+  window.addEventListener('edo:authenticated',async event=>{
+    user=event.detail.user;
+    const cfg=window.EDO_CONFIG||{};
+    if(window.supabase&&cfg.supabaseUrl&&cfg.supabaseAnonKey) {
+      // Separate client only for cross-device transcript synchronization.
+      // Supabase auth uses the same localStorage session by project URL.
+      db=window.supabase.createClient(cfg.supabaseUrl,cfg.supabaseAnonKey,{auth:{storageKey:'edo-kr-sync-auth',persistSession:false,autoRefreshToken:false}});
+      // Use the authenticated account's user metadata from the existing auth flow instead.
+      db=null;
+    }
+    const remote=user.user_metadata?.kr_chat_state_v2;
+    if(remote && Array.isArray(remote.lines) && remote.lines.length>state.lines.length){
+      state={...defaults,...remote,lines:remote.lines.slice(-80)};save();render();
+    }
+  });
+  render();syncInput();
+  // Wait until DOM and other scripts settle; the welcome is a public first-visit event.
+  later(()=>{if(!state.introNotified)startIntro();else if(state.archiveUnlocked&&!state.archiveNotified)startArchive();},900);
+})();
