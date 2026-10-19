@@ -73,7 +73,16 @@
       if (mode === 'register') {
         const name = codename.value.trim();
         if (name.length < 2 || name.length > 30) throw new Error('Choose a codename of 2–30 characters.');
-        const {data,error} = await db.auth.signUp({email:addr,password:pass,options:{data:{codename:name}}});
+        
+const {data,error} = await db.auth.signUp({
+  email: addr,
+  password: pass,
+  options: {
+    data: { codename: name },
+    emailRedirectTo: "https://altyywaltyy8-sketch.github.io/the-edo-archives/"
+  }
+});
+
         if (error) throw error;
         if (!data.session) {msg('Check your email to confirm registration, then return to sign in.');return;}
         await refresh();
