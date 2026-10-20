@@ -22,7 +22,7 @@
     return e;
   }
   if (!configured || !window.supabase) {
-    overlay.hidden = true;
+    overlay.hidden = true;document.body.classList.remove('show-login');
     desk.textContent = 'SETUP REQUIRED — Add your Supabase project URL and publishable key to config.js, then run supabase.sql. See README.md.';
     signout.hidden = true;
     return;
@@ -39,8 +39,8 @@
   }
   async function refresh() {
     const {data:{user},error} = await db.auth.getUser();
-    if (error || !user) { overlay.hidden = false; evidenceBox.replaceChildren(); desk.textContent = 'SIGN IN REQUIRED'; return; }
-    overlay.hidden = true;
+    if (error || !user) { window.dispatchEvent(new Event('edo:signed-out')); overlay.hidden = false; document.body.classList.add('show-login'); evidenceBox.replaceChildren(); desk.textContent = 'SIGN IN REQUIRED'; return; }
+    overlay.hidden = true;document.body.classList.remove('show-login');
     desk.textContent = 'Synchronizing investigator records…';
     try {
       const profile = await profileFor(user);
@@ -62,6 +62,7 @@
       if (!assigned.length && initial?.length) desk.append(element('p','', 'Assignment pending publication.'));
       window.dispatchEvent(new CustomEvent("edo:authenticated", {detail:{user, assigned}}));
     } catch (e) {
+      window.dispatchEvent(new CustomEvent('edo:authenticated',{detail:{user,assigned:[]}}));
       desk.textContent = `Unable to load your investigator desk: ${e.message}`;
     }
   }
