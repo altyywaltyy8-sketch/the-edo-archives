@@ -3,7 +3,7 @@
    Do not put secrets here that must be hidden from someone inspecting the code. */
 const files = [
   {id:'001',title:'Autopsy Report',kind:'RECOVERED MEDICAL RECORD',date:'REDACTED',image:'images/aurelio-patient-zero-autopsy.png',body:[
-    "it dont get it. how did he contract it? where was he? aurelio, what happened to you..?"
+    "i dont get it. how did he contract it? where was he? aurelio, what happened to you..?"
   ]},
   {id:'002',title:'Scrap of Unsent Letter',kind:'UNSENT CORRESPONDENCE',date:'UNDATED',body:[
     "i found this scrap of paper in aurelios room. it was written very messily... i tried my best to decipher it."
