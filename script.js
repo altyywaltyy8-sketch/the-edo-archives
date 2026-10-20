@@ -3,16 +3,16 @@
    Do not put secrets here that must be hidden from someone inspecting the code. */
 const files = [
   {id:'001',title:'Autopsy Report',kind:'RECOVERED MEDICAL RECORD',date:'REDACTED',image:'images/aurelio-patient-zero-autopsy.png',body:[
-    "it dont get it. how did he contract it? where was he? aurelio, what happened to you..?"
+    "i dont get it. how did he contract it? where was he? aurelio, what happened to you..?"
   ]},
   {id:'002',title:'Scrap of Unsent Letter',kind:'UNSENT CORRESPONDENCE',date:'UNDATED',body:[
     "i found this scrap of paper in aurelios room. it was written very messily... i tried my best to decipher it."
   ],letter:[
     "Eloise,",
     "I am sorry.",
-    "I did not understand. Not at first. I thought I knew what was happening, but I was wrong.",
-    "I have been trying to fix it. I should have told you sooner. I thought if I could just find—",
-    "Please understand that I never meant for you to—"
+    "I did not understand. [ ] first. I thought I knew what was happening, but I was wrong.",
+    "I have been [ ] it. I should have told you sooner. I thought if I could just find [ ]",
+    "[ ] understand that I never meant for you to [ ]"
   ]}
 ];
 const people = [
