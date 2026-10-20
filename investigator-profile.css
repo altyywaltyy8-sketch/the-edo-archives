@@ -1,0 +1,15 @@
+/* Floating profile panel, separate from investigator chat */
+.edo-profile-widget{position:fixed;top:14px;right:14px;z-index:2001;font:13px/1.4 Arial,sans-serif;color:#573a5d}
+.edo-profile-widget[hidden],.edo-profile-panel[hidden]{display:none!important}
+.edo-profile-toggle{display:flex;align-items:center;gap:8px;max-width:210px;padding:7px 12px;border:2px solid #b88bb8;border-radius:24px;background:#fff1f9;color:#573a5d;box-shadow:0 3px 12px #49283a33;cursor:pointer}
+#edo-profile-codename{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:bold}
+.edo-profile-icon,.edo-profile-preview{display:grid;place-items:center;overflow:hidden;border-radius:50%;background:#e4c2e4;color:#683e6d;flex:none}
+.edo-profile-icon{width:28px;height:28px;font-size:18px}
+.edo-profile-icon img,.edo-profile-preview img{width:100%;height:100%;object-fit:cover}
+.edo-profile-panel{position:absolute;top:49px;right:0;width:min(310px,calc(100vw - 24px));background:#fff7fd;border:2px solid #c99dc9;border-radius:12px;box-shadow:0 12px 30px #31203b55;padding:14px}
+.edo-profile-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}.edo-profile-head button{border:0;background:none;font-size:22px;cursor:pointer}
+.edo-profile-panel label{display:block;font-weight:bold;margin:10px 0 4px}.edo-profile-panel input[type=text],.edo-profile-panel input:not([type]){width:100%;box-sizing:border-box;padding:9px;border:1px solid #bd99b8;border-radius:7px;background:white}
+.edo-profile-panel input[type=file]{max-width:100%;font-size:12px}.edo-profile-preview{width:64px;height:64px;margin:12px auto;font-size:30px}
+#edo-profile-save{display:block;width:100%;padding:10px;border:0;border-radius:8px;background:#b78dbb;color:white;cursor:pointer;font-weight:bold}
+#edo-profile-status{min-height:1em;font-size:12px;overflow-wrap:anywhere}
+.edo-message-avatar{width:26px;height:26px;object-fit:cover;border-radius:50%;vertical-align:middle;margin-right:6px}
