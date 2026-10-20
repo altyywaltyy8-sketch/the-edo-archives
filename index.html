@@ -1,134 +1,149 @@
-/* K.R. two-act instant messenger: blog welcome -> archive warning.
-   The transcript is stored locally, and synced to authenticated Supabase user metadata
-   when available. The secret-site transition dispatches 'edo:archive-unlocked'. */
-(() => {
-  const toast = document.getElementById('kr-toast');
-  const preview = document.getElementById('kr-toast-preview');
-  const chat = document.getElementById('kr-chat');
-  const messages = document.getElementById('kr-chat-messages');
-  const form = document.getElementById('kr-chat-form');
-  const input = document.getElementById('kr-chat-input');
-  const send = form.querySelector('button');
-  const status = document.getElementById('kr-buddy-status');
-  const storageKey = 'edo-archive-kr-chat-v2';
-  const defaults = {introNotified:false,introOpened:false,introFinished:false,archiveUnlocked:false,archiveNotified:false,archiveOpened:false,archiveFinished:false,errorShown:false,lines:[]};
-  let state = load();
-  let activeAccountId = null;
-  let user = null, db = null, timers = [], animating = false;
-  function load(key=storageKey) { try {const data=JSON.parse(localStorage.getItem(key)||'null');return {...defaults,...(data&&typeof data==='object'?data:{}) ,lines:Array.isArray(data?.lines)?data.lines.slice(-80):[]};}catch{return {...defaults,lines:[]};} }
-  function save() {
-    try {localStorage.setItem(activeAccountId ? `${storageKey}:user:${activeAccountId}` : storageKey,JSON.stringify(state));} catch {}
-    if (db && user) db.auth.updateUser({data:{kr_chat_state_v2:state}}).catch(()=>{});
-  }
-  function add(role,text) {
-    if (state.lines.some(x=>x.role===role&&x.text===text) && role==='kr') return;
-    state.lines.push({role,text}); state.lines=state.lines.slice(-80);
-    render();save();
-  }
-  function render() {
-    messages.replaceChildren();
-    state.lines.forEach(({role,text})=>{
-      const el=document.createElement('p');
-      el.className=role==='kr'?'kr-bubble kr-in':role==='user'?'kr-bubble kr-out':role==='error'?'kr-error':'kr-system';
-      el.textContent=text; messages.append(el);
-    });
-    messages.scrollTop=messages.scrollHeight;
-  }
-  function setTyping(on) {
-    status.textContent=on?'status: typing…':'status: offline';
-    const previous=messages.querySelector('.kr-typing'); if(previous)previous.remove();
-    if(on){const e=document.createElement('p');e.className='kr-typing';e.textContent='K.R. is typing...';messages.append(e);messages.scrollTop=messages.scrollHeight;}
-  }
-  function later(fn,ms){timers.push(setTimeout(fn,ms));}
-  function clearTimers(){timers.forEach(clearTimeout);timers=[];animating=false;setTyping(false);}
-  function playSequence(lines,complete){
-    if(animating)return;
-    animating=true; input.disabled=true;send.disabled=true;
-    let index=0;
-    const next=()=>{
-      if(index>=lines.length){setTyping(false);animating=false;complete();syncInput();return;}
-      setTyping(true);
-      later(()=>{setTyping(false);add('kr',lines[index++]);later(next,700);},1200);
-    };
-    next();
-  }
-  function syncInput(){
-    const blocked=animating||state.errorShown;
-    input.disabled=blocked;send.disabled=blocked;
-    input.placeholder=state.errorShown?'Account unavailable': 'Type a message…';
-  }
-  function notify(text){preview.textContent=text;toast.hidden=false;}
-  function startIntro(){
-    if(state.introNotified)return;
-    state.introNotified=true;add('kr','hiya!!!');save();notify('hiya!!!');
-  }
-  function startArchive(){
-    if(!state.archiveUnlocked || !state.introFinished || state.archiveNotified)return;
-    state.archiveNotified=true;add('kr','r u sure?');save();notify('r u sure?');
-  }
-  function unlock(){
-    if(state.archiveUnlocked)return;
-    state.archiveUnlocked=true;save();
-    if(!state.introOpened){ // Don't lose the intro if the key was entered first.
-      startIntro();return;
-    }
-    if(!animating)startArchive();
-  }
-  function openChat(){
-    toast.hidden=true;chat.hidden=false;render();
-    if(!state.introOpened){
-      state.introOpened=true;save();
-      playSequence(['welcome to my site :3','enjoy your stay!!! <3'],()=>{
-        state.introFinished=true;save();startArchive();
-      });
-    } else if(state.archiveNotified&&!state.archiveOpened){
-      state.archiveOpened=true;save();
-      playSequence(['if u found this, then i guess u must be..','take your time. please. i need to know the truth, but i couldnt do it alone.'],()=>{
-        state.archiveFinished=true;save();
-      });
-    }
-    syncInput();
-    if(!input.disabled)input.focus();
-  }
-  document.getElementById('kr-toast-open').addEventListener('click',openChat);
-  document.getElementById('kr-chat-close').addEventListener('click',()=>{chat.hidden=true;});
-  form.addEventListener('submit',e=>{
-    e.preventDefault();const text=input.value.trim();if(!text||animating||state.errorShown)return;
-    add('user',text.slice(0,500));input.value='';
-    if(state.archiveOpened){
-      add('error','ERROR: ACCOUNT NOT FOUND');state.errorShown=true;save();syncInput();
-    } // Before the secret archive, K.R. is simply offline and never replies.
-  });
-  window.addEventListener('edo:archive-unlocked',unlock);
-  // Also supports the existing FILE 004 access port (and future archive UI).
-  const unsealed=document.getElementById('unsealed');
-  if(unsealed){
-    const observer=new MutationObserver(()=>{if(!unsealed.hidden)unlock();});
-    observer.observe(unsealed,{attributes:true,attributeFilter:['hidden']});
-    if(!unsealed.hidden)unlock();
-  }
-  window.addEventListener('edo:authenticated',event=>{
-    const nextUser=event.detail?.user;
-    if(!nextUser?.id)return;
-    user=nextUser;
-    if(activeAccountId===nextUser.id)return;
-    // K.R. history belongs to the investigator, not the shared browser.
-    clearTimers();
-    activeAccountId=nextUser.id;
-    const accountKey=`${storageKey}:user:${activeAccountId}`;
-    const stored=localStorage.getItem(accountKey);
-    const remote=nextUser.user_metadata?.kr_chat_state_v2;
-    state=stored ? load(accountKey) : (remote && Array.isArray(remote.lines) ?
-      {...defaults,...remote,lines:remote.lines.slice(-80)} : {...defaults,lines:[]});
-    toast.hidden=true;
-    chat.hidden=true;
-    render();syncInput();
-    // New accounts get the welcome even when an older account used this browser.
-    if(!state.introNotified)later(startIntro,450);
-    else if(state.archiveUnlocked&&!state.archiveNotified)later(startArchive,450);
-  });
-  render();syncInput();
-  // Wait until DOM and other scripts settle; the welcome is a public first-visit event.
-  later(()=>{if(!state.introNotified)startIntro();else if(state.archiveUnlocked&&!state.archiveNotified)startArchive();},900);
-})();
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1" name="viewport"/>
+<meta content="#171e1b" name="theme-color"/>
+<title>The Edo Archive — Kiana's Archive</title>
+<link href="styles.css" rel="stylesheet"/>
+<link href="kr-message.css" rel="stylesheet"/>
+<link href="kr-chat-additions.css" rel="stylesheet"/>
+<link href="retro.css" rel="stylesheet"/>
+<link href="y2k-extras.css" rel="stylesheet"/>
+<link href="blog.css?v=3" rel="stylesheet"/><link href="rose-scrapbook.css?v=1" rel="stylesheet"/>
+<link href="voicemail.css" rel="stylesheet"/>
+<script defer="" src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script defer="" src="config.js"></script>
+<script defer="" src="script.js"></script>
+<script defer="" src="multiplayer.js?v=login-first-2"></script>
+<script defer="" src="kr-chat.js?v=login-first-2"></script>
+<script defer="" src="y2k-extras.js"></script>
+<script defer="" src="blog-nav-v3.js?v=login-first-2"></script>
+<link href="investigator-chat.css?v=1" rel="stylesheet"/>
+<script defer src="investigator-chat.js?v=1"></script><script defer src="rose-scrapbook.js?v=1"></script>
+</head>
+<body>
+<div class="blog-front" id="blog-front">
+<div class="blog-wrap">
+<header class="blog-head"><div class="blog-mini">✧ KIANA'S ONLINE DIARY ✧ 2006-ish ✧ BEST VIEWED WITH A SNACK ✧</div><h1>kiana's little corner <span>♡</span></h1><p>hello internet!!! welcome to my silly little world :3</p><div class="blog-marquee">☆ current mood: sleepy / currently listening: something embarrassing / last updated: october ☆</div></header>
+<div class="blog-columns"><aside class="blog-side"><div class="blog-box"><strong>✧ about me ✧</strong><p>kiana / collects tiny things / probably online too much</p><p>favorite color: pink (obviously)</p></div><div class="blog-box"><strong>✧ clickies ✧</strong><a data-blog-nav="home" href="#blog-home">my posts ♡</a><a data-blog-nav="about" href="#blog-about">about me ☆</a><a data-blog-nav="guestbook" href="#guestbook">guestbook ✎</a><button id="blog-signin" type="button">investigator? no, just friends! ✉</button></div><div class="blog-box" hidden="" id="blog-archive-shortcut"><strong>✧ secret bookmark ✧</strong><button id="return-to-archive" type="button">↗ return to the archive</button><small>your notes are still where you left them ♡</small></div><div class="blog-box"><strong>✧ visitors ✧</strong><p>000017 &amp; counting</p><p class="blog-sticker">☆ UNDER CONSTRUCTION ☆</p></div><div class="blog-box"><strong>✧ moodboard ✧</strong><img alt="A tiny pink digital camera and a sticker marked 07" src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI3MDAiIGhlaWdodD0iMzcwIiB2aWV3Qm94PSIwIDAgNzAwIDM3MCI+PHJlY3Qgd2lkdGg9IjcwMCIgaGVpZ2h0PSIzNzAiIGZpbGw9IiNlYWNkZTAiLz48cmVjdCB4PSIxMTAiIHk9IjEwNSIgd2lkdGg9IjQ4MCIgaGVpZ2h0PSIxOTAiIHJ4PSIyNSIgZmlsbD0iI2NmODliNyIgc3Ryb2tlPSIjYWQ2MDk5IiBzdHJva2Utd2lkdGg9IjEwIi8+PGNpcmNsZSBjeD0iMzYwIiBjeT0iMTkwIiByPSI3NSIgZmlsbD0iI2VlZTFlZCIgc3Ryb2tlPSIjOTY1YjliIiBzdHJva2Utd2lkdGg9IjEzIi8+PGNpcmNsZSBjeD0iMzYwIiBjeT0iMTkwIiByPSI0NSIgZmlsbD0iIzdlNzg5YyIvPjxyZWN0IHg9IjE1MCIgeT0iMTMwIiB3aWR0aD0iNzUiIGhlaWdodD0iNDAiIHJ4PSI3IiBmaWxsPSIjZmZmMmVkIi8+PHRleHQgeD0iNDgwIiB5PSIyNjQiIGZvbnQtc2l6ZT0iMjgiIGZpbGw9IiNmZmYiPjA3PC90ZXh0Pjwvc3ZnPg=="/><small>my camera keeps forgetting the dates...</small></div></aside>
+<main class="blog-main"><section class="blog-page" id="blog-home">
+<div class="blog-welcome">✦ diary entries ✦ tiny adventures ✦ embarrassing pictures ✦</div>
+<article class="blog-post"><div class="post-date">OCT 12 · 11:48 PM</div><h2>hiii internet!! ♡</h2><p>i finally made my own little scrapbook!!! flip through the pages and decorate them with roses if you want!!! ♡ the prettiest ones are the ones we make together :3</p><div class="rose-scrapbook" id="rose-scrapbook"><div class="rose-scrapbook-top"><strong>✿ kiana's little scrapbook ✿</strong><span id="rose-scrapbook-status" role="status">loading the scrapbook...</span></div><div class="rose-scrapbook-book"><button type="button" class="rose-page-nav" id="rose-prev" aria-label="Previous scrapbook page">❮</button><div id="rose-page" class="rose-page" aria-label="Decorate this scrapbook page with rose stickers"><div class="rose-page-background"><span id="rose-page-title"></span><span id="rose-page-note"></span></div><div id="rose-sticker-layer" class="rose-sticker-layer"></div></div><button type="button" class="rose-page-nav" id="rose-next" aria-label="Next scrapbook page">❯</button></div><div class="rose-scrapbook-bottom"><span id="rose-page-count">page 1 / 4</span><p>pick a rose, then tap anywhere on the page to place it! drag roses to rearrange them ♡</p><div class="rose-palette" id="rose-palette" aria-label="Choose a rose color"></div><button type="button" id="rose-cancel" class="rose-cancel">stop placing roses</button></div></div><p>please sign my guestbook if you visit!! byeeee ♡</p><div class="post-footer">mood: crafty ♡ · comments (0)</div></article>
+<article class="blog-post"><div class="post-date">OCT 09 · 4:22 PM</div><h2>genevieves art ♡</h2><img alt="Genevieve painting a landscape in her blue dress, photographed with a digital camera" src="images/genevieve-art.jpg" loading="lazy"/><p>genevieve mustve been born a prodigy or something... she is crazy talented!! too bad father doesnt really approve... oh well ;w;</p><div class="post-footer">mood: inspired ♡ · comments (2)</div></article>
+<article class="blog-post"><div class="post-date">OCT 07 · 7:01 PM</div><h2>big bro teaching me chess</h2><img alt="Aurelio thinking at a chessboard, with one white pawn advanced and the remaining pieces at their starting squares." loading="lazy" src="images/aurelio-chess.jpg"/><p>aurelio was teaching me how to play chess today!! he beat me so many times, but i dont care since i got to spend time with him ♡ . he said what he wanted me to take away from this is that every move matters... but i could never remember all those rows and columns ;( like what is "knight to f5" or "king to p10" ??????? i just move the pieces where i please!!</p><p>anyways... i guess thats why hes a soldier and im not :P</p><div class="post-footer">mood: :P · comments (1)</div></article><article class="blog-post"><div class="post-date">FROM MY CAMERA ♡</div><h2>genevieve turned 16!!</h2><img alt="Genevieve in a tiara covering her mouth, Anthony smiling at her, Eloise posing with a peace sign, and Aurelio looking away at a strawberry-cake birthday party." loading="lazy" src="images/genevieve-birthday.jpg"/><p>happy bday to my sister!!! but man, no one could look at the camera for the life of them TwT</p><p>thanks to eloise for realizing i had ZERO photos of everyone!!! she actually posed :L also, anthony baked the cake!! SO DELISH!!!!! &lt;333 i need him to make me more just for myself</p><div class="post-footer">mood: birthday cake!!! ♡ · comments (0)</div></article>
+<article class="blog-post"><div class="post-date">OCT 02 · 2:30 PM</div><h2>things i like lately</h2><p>little cameras, old postcards, strawberry milk, silly nicknames, notebooks that snap shut, cute websites, glitter stickers, collecting receipts, and not being asked a million questions at dinner.</p><p>also! if a page on here ever looks weird, maybe i messed up the HTML again. oops.</p><div class="post-footer">mood: :3 · comments (0)</div></article><article class="blog-post"><div class="post-date">FROM MY CAMERA ♡</div><h2>ready for a ball!!</h2><img alt="Kiana in a lavender gown taking a blurry digicam selfie with her older sister Eloise in a blue gown at a formal ball." loading="lazy" src="images/kiana-eloise-ball.jpg"/><p>me and eloise look so pretty here! unfortunately genevieve got too sick and couldnt attend :( not that father was particularly worried....</p><p>hehe, you shouldve seen how aurelio blushed when he saw eloise!! &gt;:3</p><div class="post-footer">mood: fancy!!! ♡ · comments (0)</div></article>
+<article class="blog-post"><div class="post-date">SEP 28 · 8:12 PM</div><h2>small update!</h2><p>sorry if things are in weird places. im fixing the links one at a time. the little box at the very bottom is just for me, so please dont mess with it. ♡</p><div class="post-footer">mood: busy · comments (0)</div></article>
+</section><section class="blog-page" hidden="" id="blog-about"><article class="blog-post"><h2>about kiana ♡</h2><p>hi!!! i'm kiana. this is my personal corner of the internet. i like taking pictures of ordinary things and saving stuff i'll probably forget about later.</p><p>if you're reading this, i hope you have a good day! :)</p></article></section><section class="blog-page" hidden="" id="blog-guestbook"><h2>guestbook ✎</h2><p>my little message wall! sign in if you want to leave a note.</p><div id="blog-guestbook-mount"></div><button id="blog-guestbook-signin" type="button">sign in to leave a note ✉</button></section>
+<div class="blog-lock"><p>✧ a page that doesn't have a link ✧</p><label for="blog-access-key">private scrapbook key</label><div class="blog-key-row"><input autocomplete="off" id="blog-access-key" placeholder="---- / -- / ----" spellcheck="false"/><button id="blog-unlock" type="button">open ♡</button></div><p id="blog-access-feedback" role="status"></p><details class="blog-help"><summary>lost? check your scrapbook scraps</summary><p>There are three parts. Sign in to see your assigned scrap; compare notes with other investigators.</p></details><div class="blog-scrap" hidden="" id="blog-scrap"></div></div>
+</main></div><footer class="blog-footer">♡ this page was made by kiana ♡ no stealing my blinkies!!! ♡</footer>
+</div>
+</div>
+<div class="archive-transition" hidden="" id="archive-transition"><span>the wallpaper was never the whole story.</span><strong>THE EDO ARCHIVE</strong><small>RESTORING PRIVATE INDEX...</small></div>
+<div aria-hidden="true" class="noise"></div>
+<div class="retro-topbar"><span>✧ best viewed on a desktop computer ✧</span><span>THE EDO ARCHIVE // personal archive mirror</span><span>✧ last updated: unknown ✧</span></div>
+<div class="shell">
+<header class="masthead">
+<a aria-label="The Edo Archive, home" class="wordmark" href="#home"><span class="seal">K<span class="seal-small">R</span></span><span>THE EDO ARCHIVE<small>PRIVATE RESEARCH ARCHIVE · K. ROSSO</small></span></a>
+<div class="system-state"><span class="pulse"></span> MIRROR ONLINE <span class="slash">/</span> INDEX INCOMPLETE</div>
+</header>
+<div class="layout">
+<nav aria-label="Archive navigation" class="sidebar">
+<div class="retro-side-label">✧ navigation ✧</div><div class="nav-heading">DIRECTORY / 01</div>
+<a class="nav-link" data-view="investigator" href="#investigator"><span>00</span> Investigator desk <em>NEW</em></a>
+<a class="nav-link active" data-view="home" href="#home"><span>01</span> Overview</a>
+<a class="nav-link" data-view="case-files" href="#case-files"><span>02</span> Case files <em>03</em></a>
+<a class="nav-link" data-view="people" href="#people"><span>03</span> Persons of interest</a>
+<a class="nav-link" data-view="access" href="#access"><span>04</span> Restricted access <i>◈</i></a>
+<a class="nav-link" data-view="guestbook" href="#guestbook"><span>05</span> Guestbook <em>NEW</em></a>
+<div aria-hidden="true" class="y2k-side-gif"><span class="y2k-star">✦</span><span>under<br/>construction</span><span class="y2k-star">✦</span></div>
+<div aria-label="Archive decorations" class="y2k-stamp-stack"><span class="y2k-stamp">✧ 100% HAND CODED ✧</span><span class="y2k-stamp pink">NO DEAD LINKS...?</span><span class="y2k-stamp">BEST VIEWED AT 1024×768</span></div>
+<a class="y2k-guestbook-link" data-view="guestbook" href="#guestbook">✎ sign the guestbook ↗</a>
+<div class="retro-side-widget"><div class="retro-widget-title">✧ visitor counter ✧</div><div class="retro-counter">0 0 0 0 1 7</div><div class="retro-widget-note">you are not alone here</div></div><button class="return-to-blog" id="return-to-blog" type="button">♡ return to kiana's little corner</button><div class="nav-bottom"><div>ARCHIVE BUILD <strong>0.4.7</strong></div><div>LAST AUTHOR: <strong>K.R.</strong></div><div class="warning">RECOVERY MODE ENABLED</div></div>
+</nav>
+<main id="main" tabindex="-1">
+<section aria-labelledby="investigator-title" class="view" id="view-investigator"><div class="eyebrow">DIRECTORY / 00</div><h2 id="investigator-title">Investigator desk</h2><p class="section-intro">Your recovered evidence is assigned individually. Other investigators may have received different fragments.</p><div class="access-panel" id="investigator-status">Authentication required.</div><div class="evidence-cards" id="assigned-evidence"></div><button class="auth-action" id="sign-out" type="button">SIGN OUT</button></section>
+<section aria-labelledby="home-title" class="view visible" id="view-home">
+<div class="retro-window-title"><span>▣ archive_home.html</span><span>— □ ×</span></div><div class="eyebrow">PERSONAL ARCHIVE / UNVERIFIED MATERIAL</div>
+<div class="hero"><div><p class="overline">PRIVATE INDEX / K.R.</p><h1 id="home-title">The Edo<br/><em>Archive.</em></h1><p class="hero-deck">Recovered notes. Unanswered questions. Not for public distribution.</p></div><div aria-hidden="true" class="hero-stamp"><span>FILE</span><strong>001</strong><span>OPEN</span></div></div>
+<div class="rule"><span>K.R. / FIRST PRIVATE POST</span><span>01 / 04</span></div>
+<article class="letter"><div class="letter-top"><span>IF YOU FOUND THIS</span><span>— K.R.</span></div><p>i don't know who's going to find this. i don't even know if i want anyone to.</p><p>i made this part of the website because i needed somewhere to put everything. i can't keep it in my room anymore, and i definitely can't let my family find it.</p><p>the official report says aurelio z. edo was patient zero.</p><p>that doesn't make sense.</p><p>he wasn't sick when he left. he wasn't investigating any disease. he was looking into something else entirely.</p><p>so why does every record of what happened to him start at the hospital?</p><p>where was he before that? and why won't anyone tell me?</p><p class="scribble">patient zero is what they called him. it isn't an explanation.</p><div class="signature">— Kiana</div></article>
+<section aria-labelledby="aurelio-voicemail-title" class="voicemail-file">
+<div class="voicemail-file-top"><span>▣ ATTACHMENT / PERSONAL</span><span>EAVE_B08-0217.mp3</span></div>
+<div class="eyebrow">RECOVERED AUDIO / K.R.</div>
+<h2 id="aurelio-voicemail-title">aurelio's last voicemail</h2>
+<div class="voicemail-kiana-note">
+<p>this was the last voicemail aurelio ever left me.</p>
+<p>he was supposed to take me to this little bakery i found. i'd been bothering him about it for weeks lol. he said he couldn't make it and promised we'd go another day.</p>
+<p>i kept it because i thought it was funny that he actually remembered my order.</p>
+<p>i didn't know it would be the last time i'd hear his voice.</p>
+<p class="voicemail-signature">— kiana</p>
+</div>
+<div class="voicemail-player-wrap"><div class="voicemail-player-label">▶ PLAY ATTACHMENT · EAVE_B08-0217</div><audio aria-label="Aurelio's last voicemail to Kiana" controls="" preload="metadata"><source src="audio/EAVE_B08-0217.mp3" type="audio/mpeg"/>Your browser does not support audio playback.</audio></div>
+</section>
+<div class="feature-grid"><button class="feature" data-go="case-files"><span class="feature-index">01 / INVESTIGATE</span><strong>Open the case files <span>↗</span></strong><small>Three recovered records. One unanswered question.</small></button><button class="feature" data-go="people"><span class="feature-index">02 / CROSS-REFERENCE</span><strong>Review the names <span>↗</span></strong><small>The people closest to Aurelio's last investigation.</small></button></div>
+<div class="y2k-broken-media"><span aria-hidden="true" class="y2k-broken-icon">▧</span><div><strong>memory_004.gif</strong><small>Image cannot be displayed. Original file missing.</small></div><span class="y2k-broken-status">[ X ]</span></div>
+<div class="bottom-line"><span>NOT AN OFFICIAL GOVERNMENT RECORD</span><span>NOT ALL FILES HAVE BEEN RECOVERED</span></div>
+</section>
+<section aria-labelledby="files-title" class="view" id="view-case-files"><div class="eyebrow">DIRECTORY / 02</div><h2 id="files-title">Case files</h2><p class="section-intro">The first records Kiana collected about Aurelio Z. Edo. Select an entry to read it.</p><div class="file-list" id="file-list"></div><article aria-live="polite" class="document-reader" hidden="" id="document-reader"></article></section>
+<section aria-labelledby="people-title" class="view" id="view-people"><div class="eyebrow">DIRECTORY / 03</div><h2 id="people-title">Persons of interest</h2><p class="section-intro">These notes reflect Kiana's understanding at the time they were written. They are not definitive findings.</p><div class="people-grid" id="people-grid"></div></section>
+<section aria-labelledby="access-title" class="view" id="view-access"><div class="eyebrow">DIRECTORY / 04</div><h2 id="access-title">Restricted access</h2><p class="section-intro">One file was separated from the public index. Kiana left a clue, not a password.</p><div class="access-panel"><div aria-hidden="true" class="lock-icon">◇</div><div class="access-title">FILE 004 — PERSONAL NOTE</div><p class="clue">“When they reduced him to a number, I kept his name. When they reduced him to a case, I kept his initials.”</p><label for="passcode">ENTER ACCESS KEY</label><div class="key-row"><input autocomplete="off" id="passcode" maxlength="24" placeholder="ACCESS KEY" spellcheck="false" type="text"/><button id="unlock" type="button">UNSEAL ↗</button></div><p aria-live="polite" id="access-feedback" role="status"></p><div class="unsealed" hidden="" id="unsealed"><div class="document-tag">FILE 004 / K.R. / PRIVATE</div><h3>A note to myself</h3><p>I keep reading the official statement as though the words might change.</p><p>They say Aurelio was the first. That doesn't tell me what he was looking for. It doesn't tell me why he went there.</p><p>I need to find the facility records. Start with the place, not the people.</p><p class="scribble">Do not mistake the first recorded death for the beginning.</p></div></div></section>
+<section aria-labelledby="guestbook-title" class="view" id="view-guestbook">
+<div class="retro-window-title"><span>✎ guestbook.htm</span><span>— □ ×</span></div>
+<div class="eyebrow">SITE / VISITORS / PUBLIC LOG</div>
+<h2 id="guestbook-title">guestbook <span class="y2k-sparkle">✧</span></h2>
+<p class="section-intro">if you found this page, leave something behind. — k.r.</p>
+<div class="y2k-guestbook-layout">
+<div aria-live="polite" class="y2k-guestbook-entries" id="guestbook-entries">
+<article class="y2k-entry"><div><strong>visitor_000</strong><time>date unknown</time></div><p>the link on the homepage is broken. is anyone still here?</p></article>
+<article class="y2k-entry"><div><strong>no_name</strong><time>date unknown</time></div><p>don't trust the official report.</p></article>
+<article class="y2k-entry"><div><strong>k.r.</strong><time>last edited: unknown</time></div><p>please stop asking me to take this down.</p></article>
+<p class="y2k-guestbook-state" id="guestbook-status" role="status">Connecting to the guestbook…</p></div>
+<form class="y2k-guestbook-form" id="guestbook-form">
+<div class="y2k-form-title">✧ SIGN MY GUESTBOOK ✧</div>
+<label for="guestbook-name">investigator codename</label><input id="guestbook-name" placeholder="sign in to post" readonly="" type="text"/>
+<label for="guestbook-message">message</label><textarea id="guestbook-message" maxlength="280" placeholder="leave a message..." required="" rows="5"></textarea>
+<button id="guestbook-submit" type="submit">✎ post message</button><button id="guestbook-refresh" type="button">↻ refresh messages</button>
+<p class="y2k-guestbook-note">Messages are shared with all signed-in investigators. Be respectful and do not share personal information.</p>
+</form>
+</div>
+</section>
+</main>
+</div>
+<footer><span class="y2k-footer-stamp">✦ MADE WITH TOO MUCH CAFFEINE ✦</span> THE EDO ARCHIVE <span>THIS ARCHIVE IS A FICTIONAL WORK · NO REAL-WORLD EMERGENCY</span> <button aria-pressed="false" id="contrast-toggle" type="button">DISPLAY: PAPER</button></footer>
+</div>
+<div class="auth-overlay" hidden="" id="auth-overlay"><form class="auth-card" id="auth-form"><div class="eyebrow">RESTRICTED NETWORK / IDENTITY VERIFICATION</div><h2>Investigator access</h2><p>Register to receive an individual evidence fragment and preserve your case progress.</p><label for="auth-email">EMAIL ADDRESS</label><input autocomplete="email" id="auth-email" required="" type="email"/><label for="auth-password">PASSWORD</label><input autocomplete="current-password" id="auth-password" minlength="8" required="" type="password"/><label for="auth-codename">CODENAME</label><input autocomplete="nickname" id="auth-codename" maxlength="30" minlength="2"/><div class="auth-buttons"><button id="login-button" type="submit">SIGN IN</button><button id="register-button" type="button">REGISTER</button></div><p aria-live="polite" id="auth-feedback" role="status"></p></form></div>
+<div class="kr-toast" hidden="" id="kr-toast">
+<button aria-label="Open message from K.R." class="kr-toast-button" id="kr-toast-open" type="button">
+<span class="kr-toast-header"><span class="kr-toast-dot"></span> INSTANT MESSAGE RECEIVED <span class="kr-toast-close-hint">↗</span></span>
+<strong>✉ K.R. says:</strong><span id="kr-toast-preview">hiya!!!</span>
+</button>
+</div>
+<section aria-label="Messages from K.R." class="kr-chat" hidden="" id="kr-chat" role="dialog">
+<header class="kr-chat-header"><span class="kr-chat-window-icon">✉</span><span>K.R. - Instant Message</span><div class="kr-window-buttons"><span aria-hidden="true">_</span><span aria-hidden="true">□</span><button aria-label="Close chat" id="kr-chat-close" type="button">×</button></div></header>
+<div class="kr-menu-bar"><span>File</span><span>Edit</span><span>Insert</span><span>People</span><span class="kr-warning">System Warning Level: 0%</span></div>
+<div class="kr-chat-body"><aside class="kr-buddy-pane"><div class="kr-buddy-avatar">?</div><strong>K.R.</strong><small id="kr-buddy-status">status: offline</small><div class="kr-buddy-decoration">✧<br/>✉<br/>✧</div></aside><div class="kr-chat-main"><div class="kr-chat-conversation-label">conversation history</div>
+<div aria-live="polite" class="kr-chat-messages" id="kr-chat-messages">
+</div>
+<div class="kr-format-bar"><span>A</span><span><b>B</b></span><span><i>I</i></span><span><u>U</u></span><span>✉</span><span>☻</span><span>☆</span></div>
+<form class="kr-chat-form" id="kr-chat-form">
+<label class="kr-sr-only" for="kr-chat-input">Reply to K.R.</label>
+<input autocomplete="off" id="kr-chat-input" maxlength="500" placeholder="Type a message…" required="" type="text"/>
+<button aria-label="Send message" type="submit">↗</button>
+</form></div></div>
+<div class="kr-chat-footer"><span>✧ expressions</span><span>✧ buddy list</span><span>✧ message archive</span><span class="kr-connection">▂▄▆█</span></div>
+</section>
+<div id="investigator-chat-widget" class="investigator-chat-widget">
+  <button id="investigator-chat-toggle" class="investigator-chat-toggle" type="button" aria-expanded="false" aria-controls="investigator-chat-panel">✉ Investigator Chat</button>
+  <section id="investigator-chat-panel" class="investigator-chat-panel" aria-label="Investigator group chat" hidden>
+    <header class="investigator-chat-header"><strong>✧ investigator chat ✧</strong><button id="investigator-chat-close" type="button" aria-label="Close investigator chat">×</button></header>
+    <p class="investigator-chat-note">shared room · messages saved · use a codename, not personal details</p>
+    <div id="investigator-chat-status" class="investigator-chat-status" role="status">Sign in to join the other investigators.</div>
+    <div id="investigator-chat-log" class="investigator-chat-log" aria-live="polite" aria-label="Shared messages"></div>
+    <form id="investigator-chat-form" class="investigator-chat-form"><label class="sr-only" for="investigator-chat-message">Your message</label><input id="investigator-chat-message" type="text" maxlength="500" placeholder="message the investigators..." autocomplete="off" required disabled/><button type="submit" disabled>send ♡</button></form>
+  </section>
+</div>
+</body>
+</html>
 
