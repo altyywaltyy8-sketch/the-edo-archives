@@ -1,0 +1,116 @@
+
+/* Edo Archive 2002-2007 personal-web makeover. CSS-only decoration; no third-party assets. */
+:root{--bg:#d3d3da;--panel:#e9e9ec;--ink:#252333;--muted:#59556b;--line:#878391;--accent:#554875;--paper:#f7f4ee;--paper-ink:#252333}
+html{scroll-behavior:smooth}
+body{color:#252333;font:14px/1.5 Verdana,Tahoma,sans-serif;background-color:#cac9d2;background-image:radial-gradient(#77738b 0.7px,transparent .9px),linear-gradient(90deg,transparent 47%,#e4e2e9 48%,#e4e2e9 52%,transparent 53%);background-size:12px 12px,38px 38px}
+.noise{opacity:.035;z-index:1}
+.retro-topbar{max-width:1180px;margin:12px auto 0;background:#f5f3f6;border:1px solid #8e8998;border-bottom:0;padding:5px 12px;display:flex;justify-content:space-between;gap:12px;color:#5a526f;font:10px Tahoma,sans-serif}
+.shell{max-width:1180px;margin:0 auto 30px;min-height:0;border:3px ridge #888493;background:#e2e0e7;box-shadow:8px 9px 0 #5b566780,0 0 0 2px #f7f5fa}
+.masthead{min-height:140px;position:relative;align-items:flex-end;padding:25px 25px 15px;border-bottom:5px ridge #aca5b7;background:linear-gradient(120deg,#302943d9,#58496eae),repeating-linear-gradient(45deg,#aca6b8 0 12px,#d4d0dd 12px 24px);color:#f5f0fc}
+.wordmark{font:italic bold clamp(25px,4vw,43px) Georgia,serif;letter-spacing:-.045em;text-shadow:2px 2px 1px #16101f}
+.wordmark small{font:10px/1.8 'Courier New',monospace;letter-spacing:.2em;color:#e4deec;text-shadow:none}
+.seal{border:2px double #e4d6f3;background:#382f4b;width:56px;height:56px;font:normal 30px Georgia,serif}
+.system-state{color:#f6edf8;background:#3d315a;padding:6px 8px;border:1px inset #c6bad3;font-size:10px}
+.layout{grid-template-columns:206px minmax(0,1fr);gap:10px;padding:10px}
+.sidebar{border:2px ridge #8b8495;background:#f2eff4;min-height:650px;padding:7px;gap:3px}
+.retro-side-label,.retro-widget-title{background:linear-gradient(#695884,#3d325e);border:1px solid #c9c1d4;color:#fff;text-align:center;padding:7px 5px;font:bold 12px Georgia,serif;letter-spacing:.05em}
+.nav-heading{font-size:9px;margin:10px 6px 6px;color:#645d72}
+.nav-link{color:#343050;padding:9px 7px;font:12px Verdana,sans-serif;border:1px solid #aba5b3;border-left:1px solid #aba5b3;background:linear-gradient(#fff,#e1dde7);box-shadow:inset 1px 1px #fff}
+.nav-link span{color:#776f91}
+.nav-link:hover,.nav-link:focus-visible,.nav-link.active{background:linear-gradient(#e7dff4,#c9c0db);color:#34264d;border-left:4px solid #75639a}
+.nav-link em{font:9px Tahoma,sans-serif;background:#f5c9e2;border:1px solid #bc9cae;padding:1px 4px;color:#5c3551}
+.retro-side-widget{margin-top:18px;border:1px solid #8d859b;background:#f8f5f8;padding:5px;text-align:center}
+.retro-counter{margin:10px 0 4px;background:#22212b;color:#d4f6c4;letter-spacing:.12em;font:17px 'Courier New',monospace;padding:5px 2px;border:2px inset #a5a0b1}
+.retro-widget-note{font:10px 'Courier New',monospace;color:#6b5974;padding-bottom:8px}
+.nav-bottom{margin-top:15px;padding:10px 5px;border-top:1px dashed #aaa0b4;color:#635b6e}
+.nav-bottom strong{color:#4b4164}
+.warning{color:#a02d56}
+main{min-height:680px;border:2px ridge #aaa2b5;background:#f6f5f7;padding:14px 24px 32px}
+.retro-window-title{background:linear-gradient(90deg,#3e3177,#877ab0);color:#fff;margin:-14px -24px 25px;padding:5px 9px;display:flex;justify-content:space-between;font:bold 12px Tahoma,sans-serif}
+.eyebrow{font:10px 'Courier New',monospace;color:#716283;margin:15px 0}
+h1{font:bold clamp(45px,6vw,77px)/.95 Georgia,serif;letter-spacing:-.06em;color:#382f4f}
+h1 em{color:#80628e}
+h2{color:#443454;font:bold clamp(29px,4vw,43px) Georgia,serif;letter-spacing:-.025em}
+.hero{margin-bottom:22px;align-items:center}
+.overline{color:#776784}
+.hero-deck{color:#50495f;font:14px/1.65 Verdana,sans-serif}
+.hero-stamp{border:3px double #9384a1;color:#8c7595}
+.retro-marquee{padding:7px 8px;margin:10px 0 22px;background:#e9e2ef;border:1px dashed #9b8aa6;text-align:center;color:#66506f;font:10px 'Courier New',monospace;letter-spacing:.06em}
+.rule{border-bottom:2px dotted #a8a0b1;color:#6a587c}
+.letter{transform:none;background:#fffefa;border:1px solid #aba4b1;box-shadow:4px 4px 0 #d1cad9;padding:26px 30px}
+.letter:before{display:none}
+.letter p{font:14px/1.8 Georgia,serif}
+.letter-top{color:#655575}
+.signature{color:#7a597c}
+.feature-grid{margin-top:24px}
+.feature,.file-row,.person,.access-panel{background:#ece9f1;color:#332c40;border:2px ridge #a49bab;box-shadow:inset 1px 1px #fff}
+.feature:hover,.file-row:hover,.person:hover{background:#ded5e9;transform:none}
+.feature-index,.file-num,.file-kind,.person .code,.person .role{color:#65517b}
+.feature strong,.file-name{color:#433155}
+.feature small,.person p,.section-intro{color:#62596b}
+.bottom-line{color:#71667b}
+.document-reader,.unsealed,.evidence-card{background:#fffefa;color:#342d40;box-shadow:3px 3px #c9c2d2}
+.access-panel label{color:#5a496a}
+.clue{color:#594965}
+.key-row input{background:#fff;color:#30253c}
+.key-row button,.auth-buttons button,.auth-action{background:linear-gradient(#fefefe,#d5cedf);color:#362b50;border:2px outset #a6a0ae;font:bold 12px Tahoma,sans-serif}
+.key-row button:hover{background:#e6def2}
+footer{background:#e6e2eb;color:#665c72;border-top:2px ridge #b6aebf;padding:10px 18px}
+footer button{color:#443554;background:#faf9fc;border:2px outset #b4aabc}
+.auth-overlay{background:rgba(34,25,48,.78);backdrop-filter:blur(2px)}
+.auth-card{background:#efedf2;color:#322a41;border:3px ridge #aaa1b7;box-shadow:8px 8px #2721367d;padding:25px 28px}
+.auth-card:before{content:"✧  THE EDO ARCHIVE — MEMBER SIGN ON                          □ ×";display:block;margin:-25px -28px 16px;padding:8px 12px;background:linear-gradient(90deg,#3e3177,#887ab0);color:#fff;font:bold 11px Tahoma,sans-serif}
+.auth-card h2{font:bold 28px Georgia,serif;color:#46365a}
+.auth-card label{color:#50415c}
+.auth-card input{background:#fff;border:2px inset #b7b0c0;color:#2c2536}
+.auth-buttons button{padding:10px 15px}
+.auth-buttons button+button{background:linear-gradient(#fefefe,#d5cedf);color:#362b50}
+#auth-feedback{color:#a2374b}
+.paper-mode{--bg:#d3d3da;--panel:#e9e9ec;--ink:#252333;--muted:#59556b;--line:#878391;--accent:#554875;--paper:#f7f4ee;--paper-ink:#252333}
+.paper-mode .nav-link,.paper-mode .hero-deck,.paper-mode .section-intro,.paper-mode .person p,.paper-mode .feature small{color:#4f455b}
+.paper-mode .nav-link.active,.paper-mode .nav-link:hover{color:#34264d}
+.paper-mode .feature,.paper-mode .file-row,.paper-mode .person,.paper-mode .access-panel{background:#ece9f1}
+.paper-mode .clue{color:#594965}
+.paper-mode .key-row input{background:#fff;color:#30253c}
+/* Old instant messenger window */
+.kr-toast{width:min(325px,calc(100vw - 24px))}
+.kr-toast-button{background:#efedf1;color:#28233a;border:3px ridge #8f89a1;box-shadow:5px 5px 0 #24203380;padding:0 12px 12px;gap:5px;font:13px Tahoma,sans-serif}
+.kr-toast-header{background:linear-gradient(90deg,#3c3197,#2b70da);color:#fff;margin:0 -12px 8px;padding:8px 10px;width:calc(100% + 24px);font:bold 10px Tahoma,sans-serif;letter-spacing:.01em}
+.kr-toast-dot{background:#b8ffce}
+.kr-toast-button strong{font:bold 14px Tahoma,sans-serif;color:#44318b}
+.kr-toast-button>span:last-child{padding-left:4px}
+.kr-chat{width:min(480px,calc(100vw - 24px));background:#e7e5e0;color:#1e1d2d;border:3px ridge #7b7890;box-shadow:8px 8px 0 #25203485;font:13px Tahoma,sans-serif}
+.kr-chat-header{padding:5px 6px;background:linear-gradient(90deg,#1737aa,#2f87eb);color:#fff;font:bold 14px Tahoma,sans-serif;letter-spacing:0;display:flex;justify-content:flex-start;gap:6px}
+.kr-chat-window-icon{font-size:16px}
+.kr-window-buttons{margin-left:auto;display:flex;gap:3px;align-items:center}
+.kr-window-buttons span,.kr-window-buttons button{width:23px;height:22px;border:1px solid #f8f8ff;border-radius:3px;display:grid;place-items:center;background:linear-gradient(#8bb8fc,#3260c7);color:#fff;font:bold 15px Tahoma,sans-serif;padding:0}
+.kr-window-buttons button{background:linear-gradient(#ff947c,#c92119);cursor:pointer}
+.kr-menu-bar{display:flex;gap:18px;padding:5px 9px;background:#f3f0e7;border-bottom:2px ridge #b9b7b6;font:12px Tahoma,sans-serif}
+.kr-warning{margin-left:auto;font-size:10px}
+.kr-chat-body{display:grid;grid-template-columns:91px minmax(0,1fr);gap:7px;padding:8px}
+.kr-buddy-pane{background:#d3cbe3;border:1px solid #aaa3b7;display:flex;flex-direction:column;align-items:center;padding:9px 4px;gap:7px;min-width:0}
+.kr-buddy-avatar{width:63px;height:66px;display:grid;place-items:center;background:linear-gradient(140deg,#dad5e3,#a99abf);border:4px solid #f8f6ff;color:#6d5b83;font:bold 39px Georgia,serif}
+.kr-buddy-pane strong{font:12px Tahoma,sans-serif;color:#3d3173}
+.kr-buddy-pane small{font:9px Tahoma,sans-serif;color:#6c5e7b}
+.kr-buddy-decoration{margin-top:auto;color:#8a739e;text-align:center;font:20px/1.9 Georgia,serif}
+.kr-chat-main{min-width:0}
+.kr-chat-conversation-label{padding:4px 7px;border:1px solid #b7b1bf;border-bottom:0;background:#e9e5ed;color:#736a81;font:10px Tahoma,sans-serif}
+.kr-chat-messages{background:#fff;min-height:190px;max-height:290px;padding:12px 10px;border:2px inset #b8b3bd;gap:7px;display:flex;align-items:stretch}
+.kr-bubble{max-width:100%;padding:0;background:transparent;border:0;color:#282238;font:13px/1.5 Tahoma,sans-serif;border-radius:0}
+.kr-in:before{content:"K.R.: ";font-weight:bold;color:#a02655}
+.kr-out{align-self:stretch;background:transparent;color:#282238}
+.kr-out:before{content:"You: ";font-weight:bold;color:#274eac}
+.kr-error{align-self:stretch;text-align:left;color:#a22727;font:bold 12px Tahoma,sans-serif;margin-top:7px;border-top:1px dotted #d1c8d0;padding-top:9px}
+.kr-format-bar{display:flex;gap:15px;align-items:center;padding:6px 9px;background:#f1efe9;border:1px solid #b5b1b8;border-top:0;font:13px Tahoma,sans-serif;color:#2d2b47}
+.kr-chat-form{padding:5px 0 0;border:0;gap:4px}
+.kr-chat-form input{border:2px inset #b7b1bd;background:#fff;color:#282238;padding:12px 8px;font:13px Tahoma,sans-serif;min-height:63px}
+.kr-chat-form button{border:2px outset #b0a9bd;background:linear-gradient(#fff,#dad5e3);color:#302a59;font:bold 13px Tahoma,sans-serif;padding:0 9px}
+.kr-chat-footer{border-top:2px ridge #c0bbc4;display:flex;justify-content:space-between;gap:8px;align-items:center;padding:7px 10px;background:#e7e5e0;font:10px Tahoma,sans-serif;color:#494158}
+.kr-connection{color:#4c9d42}
+@media(max-width:850px){.layout{grid-template-columns:1fr}.sidebar{min-height:0}.retro-side-widget{display:none}.retro-topbar span:nth-child(2){display:none}}
+@media(max-width:550px){.retro-topbar{margin-top:0}.retro-topbar span:last-child{display:none}.masthead{min-height:110px}.wordmark{font-size:23px}main{padding:12px 15px 28px}.retro-window-title{margin:-12px -15px 18px}.hero{flex-wrap:wrap}.kr-warning{display:none}.kr-chat-body{grid-template-columns:64px minmax(0,1fr)}.kr-buddy-pane{padding:7px 2px}.kr-buddy-avatar{width:46px;height:50px;font-size:30px}.kr-buddy-pane strong{font-size:10px}.kr-buddy-pane small{font-size:8px}.kr-chat-footer{font-size:9px}.kr-chat-footer span:nth-child(2){display:none}}
+
+/* Case files: single redacted report and unfinished personal letter */
+.case-file-report{display:block;width:100%;max-width:720px;height:auto;margin:18px auto 20px;border:1px solid rgba(160,130,90,.35);box-shadow:0 5px 22px rgba(0,0,0,.16)}
+.unsent-letter{white-space:normal;margin:24px 0;padding:22px 26px;border-left:3px solid #aa9279;background:rgba(189,171,142,.09);font-family:Georgia,serif;font-style:italic;line-height:1.75}
+.unsent-letter p{margin:0 0 1em}
