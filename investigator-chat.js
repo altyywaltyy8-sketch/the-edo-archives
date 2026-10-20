@@ -10,13 +10,14 @@
   toggle.addEventListener('click',()=>setOpen(panel.hidden));close.addEventListener('click',()=>setOpen(false));
   function enabled(yes){input.disabled=!yes;send.disabled=!yes;}
   function display(rows){
-    const signature=rows.map(r=>r.id).join(',');
+    const signature=JSON.stringify(rows.map(r=>[r.id,r.codename,r.avatar_url]));
     if(signature===lastSignature)return;
     const atBottom=log.scrollHeight-log.scrollTop-log.clientHeight<65;
     log.replaceChildren();
     for(const item of rows){
       const entry=document.createElement('article');entry.className='investigator-chat-entry';
       const name=document.createElement('strong');name.textContent=item.codename || 'investigator';
+      if(item.avatar_url){const avatar=document.createElement('img');avatar.className='edo-message-avatar';avatar.src=item.avatar_url;avatar.alt='';entry.append(avatar);}
       const time=document.createElement('time');time.textContent=new Date(item.created_at).toLocaleString();
       const body=document.createElement('p');body.textContent=item.message;
       entry.append(name,time,body);log.append(entry);
@@ -28,7 +29,7 @@
     if(!client || !user || panel.hidden || busy)return;
     busy=true;
     try{
-      const {data,error}=await client.from('investigator_chat_messages').select('id,codename,message,created_at').order('created_at',{ascending:false}).limit(100);
+      const {data,error}=await client.from('investigator_chat_messages').select('id,codename,avatar_url,message,created_at').order('created_at',{ascending:false}).limit(100);
       if(error)throw error;
       display((data||[]).reverse());setStatus('connected · shared with signed-in investigators');
     }catch(e){setStatus('chat unavailable: '+e.message+' · run the chat SQL setup');}
@@ -56,6 +57,6 @@
     }catch(e){setStatus('Unable to connect: '+e.message);}
   }
   client.auth.onAuthStateChange(()=>{setTimeout(sync,0);});
-  window.addEventListener('edo:authenticated',sync);
+  window.addEventListener('edo:authenticated',sync);window.addEventListener('edo:profile-updated',()=>{lastSignature='';refresh();});
   sync();poll=setInterval(()=>{if(!panel.hidden)refresh();},5000);
 })();
