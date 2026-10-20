@@ -59,7 +59,7 @@
   }
   function notify(text){preview.textContent=text;toast.hidden=false;}
   function startIntro(){
-    if(state.introNotified)return;
+    if(!activeAccountId || state.introNotified)return;
     state.introNotified=true;add('kr','hiya!!!');save();notify('hiya!!!');
   }
   function startArchive(){
@@ -107,6 +107,7 @@
     observer.observe(unsealed,{attributes:true,attributeFilter:['hidden']});
     if(!unsealed.hidden)unlock();
   }
+  window.addEventListener('edo:signed-out',()=>{clearTimers();activeAccountId=null;user=null;toast.hidden=true;chat.hidden=true;state={...defaults,lines:[]};render();syncInput();});
   window.addEventListener('edo:authenticated',event=>{
     const nextUser=event.detail?.user;
     if(!nextUser?.id)return;
@@ -129,5 +130,6 @@
   });
   render();syncInput();
   // Wait until DOM and other scripts settle; the welcome is a public first-visit event.
-  later(()=>{if(!state.introNotified)startIntro();else if(state.archiveUnlocked&&!state.archiveNotified)startArchive();},900);
+  // Welcome is triggered only by the authenticated account event above.
 })();
+
