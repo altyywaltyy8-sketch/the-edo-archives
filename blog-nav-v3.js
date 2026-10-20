@@ -1,5 +1,5 @@
 (() => {
-  const KEY='edo-archive-stage-v1';
+  const KEY='edo-archive-stage-v2:user:';
   const front=document.getElementById('blog-front');
   const input=document.getElementById('blog-access-key');
   const feedback=document.getElementById('blog-access-feedback');
@@ -10,17 +10,18 @@
   const signIn=document.getElementById('blog-signin');
   const overlay=document.getElementById('auth-overlay');
   let user=null;
-  const saved=()=>{try{return localStorage.getItem(KEY)==='open'}catch{return false}};
+  const saved=()=>{try{return !!user && localStorage.getItem(KEY+user.id)==='open'}catch{return false}};
   function showArchive(animate){
     document.body.classList.remove('show-login');
     if(animate){transition.hidden=false;setTimeout(()=>{document.body.classList.add('archive-open');guestOriginal.append(guest);transition.hidden=true;location.hash='home';window.dispatchEvent(new Event('edo:archive-unlocked'));},1900)}
     else {document.body.classList.add('archive-open');guestOriginal.append(guest);window.dispatchEvent(new Event('edo:archive-unlocked'));}
   }
   function returnToBlog(){
+    if(!user || !saved())return;
     // Only switch the view. Do not remove the unlock flag, reset auth, or touch chat history.
     // Switching views is always allowed when the archive is already visible.
     // Older unlock flows may not have set the blog-stage localStorage key.
-    try { localStorage.setItem(KEY,'open'); } catch {}
+    try { localStorage.setItem(KEY+user.id,'open'); } catch {}
     document.body.classList.remove('archive-open','show-login');
     if(overlay)overlay.hidden=true;
     guestMount.append(guest);
@@ -32,20 +33,16 @@
     window.scrollTo(0,0);
   }
   function returnToArchive(){
-    try { localStorage.setItem(KEY,'open'); } catch {}
+    if(!user || !saved())return;
+    try { localStorage.setItem(KEY+user.id,'open'); } catch {}
     showArchive(false);
     location.hash='home';
     window.scrollTo(0,0);
   }
   document.getElementById('return-to-blog').addEventListener('click',returnToBlog);
   document.getElementById('return-to-archive').addEventListener('click',returnToArchive);
-  if(saved()){
-    document.getElementById('blog-archive-shortcut').hidden=false;
-    // Keep the selected view on refresh if the visitor deliberately returned to the blog.
-    if(location.hash.startsWith('#blog-') || location.hash==='#guestbook'){
-      guestMount.append(guest);guest.hidden=false;guest.classList.add('visible');
-    } else showArchive(false);
-  }else {guestMount.append(guest);guest.hidden=false;guest.classList.add('visible');}
+  // Always begin at the public blog until Supabase confirms the account.
+  guestMount.append(guest);guest.hidden=false;guest.classList.add('visible');
   function navigate(){
     if(document.body.classList.contains('archive-open'))return;
     const hash=location.hash;
@@ -68,7 +65,18 @@
     ['SCRAP C / Customization', 'I hope you decorated my scrapbook!']
   ];
   window.addEventListener('edo:authenticated',e=>{
-    user=e.detail.user;document.body.classList.remove('show-login');
+    const next=e.detail.user;
+    if(!next?.id)return;
+    const changed=user?.id!==next.id;
+    user=next;
+    document.body.classList.remove('show-login');
+    overlay.hidden=true;
+    if(changed){
+      document.body.classList.remove('archive-open');
+      guestMount.append(guest);guest.hidden=false;guest.classList.add('visible');
+      location.hash='blog-home';navigate();
+    }
+    document.getElementById('blog-archive-shortcut').hidden=!saved();
     const assigned=Array.isArray(e.detail.assigned)?e.detail.assigned:[];
     const original=assigned.find(item=>['E-A','E-B','E-C'].includes(String(item.id||'').trim().toUpperCase()));
     const scrapIndex=original?{'E-A':0,'E-B':1,'E-C':2}[String(original.id).trim().toUpperCase()]:null;
@@ -80,13 +88,24 @@
     el.append(strong,p);
     signIn.textContent='signed in! scrapbook scrap unlocked ✧';
   });
+  window.addEventListener('edo:signed-out',()=>{
+    user=null;
+    document.body.classList.remove('archive-open');
+    document.getElementById('blog-archive-shortcut').hidden=true;
+    document.getElementById('blog-scrap').hidden=true;
+    signIn.textContent='investigator? no, just friends! ✉';
+    guestMount.append(guest);guest.hidden=false;guest.classList.add('visible');
+    location.hash='blog-home';navigate();
+    openLogin();
+  });
   // Always allow code entry, including for accounts that previously unlocked the archive.
   // The shortcut and the code are independent ways to reach the archive.
   function tryUnlock(event){
     if(event)event.preventDefault();
+    if(!user){feedback.textContent='sign in first to save your discovery ♡';openLogin();return;}
     const value=String(input.value || '').toLowerCase().replace(/[^a-z0-9]/g,'');
     if(value==='zerod3rose' || value==='zerod4rose'){
-      try{localStorage.setItem(KEY,'open')}catch{}
+      try{localStorage.setItem(KEY+user.id,'open')}catch{}
       feedback.textContent='the wallpaper is peeling away...';
       document.getElementById('blog-archive-shortcut').hidden=false;
       // Reset the overlay before each entry so a previous unlock never blocks the animation.
