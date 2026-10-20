@@ -33,6 +33,7 @@
     name.textContent = item.codename;
     const date = document.createElement('time');
     date.textContent = new Date(item.created_at).toLocaleString();
+    if(item.avatar_url){const avatar=document.createElement('img');avatar.className='edo-message-avatar';avatar.src=item.avatar_url;avatar.alt='';meta.append(avatar);}
     meta.append(name, date);
     const content = document.createElement('p');
     content.textContent = item.message;
@@ -65,7 +66,7 @@
       nameField.value = profile?.codename || 'investigator';
       submit.disabled = false;
       const {data, error} = await client.from('guestbook_entries')
-        .select('id,codename,message,created_at').order('created_at', {ascending:false}).limit(100);
+        .select('id,codename,avatar_url,message,created_at').order('created_at', {ascending:false}).limit(100);
       if (error) throw error;
       entries.querySelectorAll('.y2k-user-entry').forEach(el => el.remove());
       (data || []).reverse().forEach(addEntry);
@@ -102,5 +103,6 @@
     if (location.hash === '#guestbook') setTimeout(() => loadGuestbook(true), 0);
   });
   else {status.textContent = 'Supabase configuration required.';submit.disabled = true;}
+  window.addEventListener('edo:profile-updated',()=>{lastLoaded=0;loadGuestbook(true);});
   syncGuestbook();
 })();
