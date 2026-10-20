@@ -1,135 +1,109 @@
-/* K.R. two-act instant messenger: blog welcome -> archive warning.
-   The transcript is stored locally, and synced to authenticated Supabase user metadata
-   when available. The secret-site transition dispatches 'edo:archive-unlocked'. */
+/* Shared investigator guestbook. Requires guestbook.sql to be run in Supabase. */
 (() => {
-  const toast = document.getElementById('kr-toast');
-  const preview = document.getElementById('kr-toast-preview');
-  const chat = document.getElementById('kr-chat');
-  const messages = document.getElementById('kr-chat-messages');
-  const form = document.getElementById('kr-chat-form');
-  const input = document.getElementById('kr-chat-input');
-  const send = form.querySelector('button');
-  const status = document.getElementById('kr-buddy-status');
-  const storageKey = 'edo-archive-kr-chat-v2';
-  const defaults = {introNotified:false,introOpened:false,introFinished:false,archiveUnlocked:false,archiveNotified:false,archiveOpened:false,archiveFinished:false,errorShown:false,lines:[]};
-  let state = load();
-  let activeAccountId = null;
-  let user = null, db = null, timers = [], animating = false;
-  function load(key=storageKey) { try {const data=JSON.parse(localStorage.getItem(key)||'null');return {...defaults,...(data&&typeof data==='object'?data:{}) ,lines:Array.isArray(data?.lines)?data.lines.slice(-80):[]};}catch{return {...defaults,lines:[]};} }
-  function save() {
-    try {localStorage.setItem(activeAccountId ? `${storageKey}:user:${activeAccountId}` : storageKey,JSON.stringify(state));} catch {}
-    if (db && user) db.auth.updateUser({data:{kr_chat_state_v2:state}}).catch(()=>{});
+  const guestbook = document.getElementById('view-guestbook');
+  const entries = document.getElementById('guestbook-entries');
+  const form = document.getElementById('guestbook-form');
+  const nameField = document.getElementById('guestbook-name');
+  const messageField = document.getElementById('guestbook-message');
+  const submit = document.getElementById('guestbook-submit');
+  const refreshButton = document.getElementById('guestbook-refresh');
+  const status = document.getElementById('guestbook-status');
+  const config = window.EDO_CONFIG || {};
+  const client = window.supabase && /^https:\/\//.test(config.supabaseUrl || '') && config.supabaseAnonKey
+    ? window.supabase.createClient(config.supabaseUrl, config.supabaseAnonKey) : null;
+  let currentUser = null;
+  let posting = false;
+  let loading = false;
+  let lastLoaded = 0;
+
+  function syncGuestbook() {
+    const active = location.hash === '#guestbook';
+    if (active) {
+      document.querySelectorAll('.view').forEach(el => el.classList.remove('visible'));
+      guestbook.classList.add('visible');
+      document.querySelectorAll('.nav-link').forEach(link => link.classList.toggle('active', link.dataset.view === 'guestbook'));
+      loadGuestbook();
+    } else guestbook.classList.remove('visible');
   }
-  function add(role,text) {
-    if (state.lines.some(x=>x.role===role&&x.text===text) && role==='kr') return;
-    state.lines.push({role,text}); state.lines=state.lines.slice(-80);
-    render();save();
+  function addEntry(item) {
+    const article = document.createElement('article');
+    article.className = 'y2k-entry y2k-user-entry';
+    const meta = document.createElement('div');
+    const name = document.createElement('strong');
+    name.textContent = item.codename;
+    const date = document.createElement('time');
+    date.textContent = new Date(item.created_at).toLocaleString();
+    if(item.avatar_url){const avatar=document.createElement('img');avatar.className='edo-message-avatar';avatar.src=item.avatar_url;avatar.alt='';meta.append(avatar);}
+    meta.append(name, date);
+    const content = document.createElement('p');
+    content.textContent = item.message;
+    article.append(meta, content);
+    entries.append(article);
   }
-  function render() {
-    messages.replaceChildren();
-    state.lines.forEach(({role,text})=>{
-      const el=document.createElement('p');
-      el.className=role==='kr'?'kr-bubble kr-in':role==='user'?'kr-bubble kr-out':role==='error'?'kr-error':'kr-system';
-      el.textContent=text; messages.append(el);
-    });
-    messages.scrollTop=messages.scrollHeight;
+  async function getAccount() {
+    if (!client) return null;
+    const {data, error} = await client.auth.getUser();
+    if (error || !data.user) return null;
+    return data.user;
   }
-  function setTyping(on) {
-    status.textContent=on?'status: typing…':'status: offline';
-    const previous=messages.querySelector('.kr-typing'); if(previous)previous.remove();
-    if(on){const e=document.createElement('p');e.className='kr-typing';e.textContent='K.R. is typing...';messages.append(e);messages.scrollTop=messages.scrollHeight;}
+  async function loadGuestbook(force = false) {
+    if (!client || loading || (!force && Date.now() - lastLoaded < 10000)) return;
+    loading = true;
+    status.textContent = 'Connecting to the archive…';
+    try {
+      currentUser = await getAccount();
+      if (!currentUser) {
+        nameField.value = '';
+        nameField.placeholder = 'sign in to post';
+        submit.disabled = true;
+        status.textContent = 'Sign in to view and sign the shared guestbook.';
+        entries.querySelectorAll('.y2k-user-entry').forEach(el => el.remove());
+        return;
+      }
+      const {data: profile, error: profileError} = await client.from('investigators')
+        .select('codename').eq('user_id', currentUser.id).maybeSingle();
+      if (profileError) throw profileError;
+      nameField.value = profile?.codename || 'investigator';
+      submit.disabled = false;
+      const {data, error} = await client.from('guestbook_entries')
+        .select('id,codename,avatar_url,message,created_at').order('created_at', {ascending:false}).limit(100);
+      if (error) throw error;
+      entries.querySelectorAll('.y2k-user-entry').forEach(el => el.remove());
+      (data || []).reverse().forEach(addEntry);
+      status.textContent = `${data.length} investigator message(s) recovered · shared across accounts`;
+      lastLoaded = Date.now();
+    } catch (error) {
+      status.textContent = 'Unable to retrieve shared entries: ' + error.message + ' (Has guestbook.sql been run?)';
+    } finally { loading = false; }
   }
-  function later(fn,ms){timers.push(setTimeout(fn,ms));}
-  function clearTimers(){timers.forEach(clearTimeout);timers=[];animating=false;setTyping(false);}
-  function playSequence(lines,complete){
-    if(animating)return;
-    animating=true; input.disabled=true;send.disabled=true;
-    let index=0;
-    const next=()=>{
-      if(index>=lines.length){setTyping(false);animating=false;complete();syncInput();return;}
-      setTyping(true);
-      later(()=>{setTyping(false);add('kr',lines[index++]);later(next,700);},1200);
-    };
-    next();
-  }
-  function syncInput(){
-    const blocked=animating||state.errorShown;
-    input.disabled=blocked;send.disabled=blocked;
-    input.placeholder=state.errorShown?'Account unavailable': 'Type a message…';
-  }
-  function notify(text){preview.textContent=text;toast.hidden=false;}
-  function startIntro(){
-    if(!activeAccountId || state.introNotified)return;
-    state.introNotified=true;add('kr','hiya!!!');save();notify('hiya!!!');
-  }
-  function startArchive(){
-    if(!state.archiveUnlocked || !state.introFinished || state.archiveNotified)return;
-    state.archiveNotified=true;add('kr','r u sure?');save();notify('r u sure?');
-  }
-  function unlock(){
-    if(state.archiveUnlocked)return;
-    state.archiveUnlocked=true;save();
-    if(!state.introOpened){ // Don't lose the intro if the key was entered first.
-      startIntro();return;
-    }
-    if(!animating)startArchive();
-  }
-  function openChat(){
-    toast.hidden=true;chat.hidden=false;render();
-    if(!state.introOpened){
-      state.introOpened=true;save();
-      playSequence(['welcome to my site :3','enjoy your stay!!! <3'],()=>{
-        state.introFinished=true;save();startArchive();
-      });
-    } else if(state.archiveNotified&&!state.archiveOpened){
-      state.archiveOpened=true;save();
-      playSequence(['if u found this, then i guess u must be..','take your time. please. i need to know the truth, but i couldnt do it alone.'],()=>{
-        state.archiveFinished=true;save();
-      });
-    }
-    syncInput();
-    if(!input.disabled)input.focus();
-  }
-  document.getElementById('kr-toast-open').addEventListener('click',openChat);
-  document.getElementById('kr-chat-close').addEventListener('click',()=>{chat.hidden=true;});
-  form.addEventListener('submit',e=>{
-    e.preventDefault();const text=input.value.trim();if(!text||animating||state.errorShown)return;
-    add('user',text.slice(0,500));input.value='';
-    if(state.archiveOpened){
-      add('error','ERROR: ACCOUNT NOT FOUND');state.errorShown=true;save();syncInput();
-    } // Before the secret archive, K.R. is simply offline and never replies.
+  form.addEventListener('submit', async event => {
+    event.preventDefault();
+    if (posting || !client) return;
+    const message = messageField.value.trim();
+    if (!message || message.length > 280) return;
+    posting = true;
+    submit.disabled = true;
+    status.textContent = 'Posting to the shared guestbook…';
+    try {
+      currentUser = await getAccount();
+      if (!currentUser) throw new Error('Please sign in first.');
+      const {error} = await client.rpc('post_guestbook_message', {p_message:message});
+      if (error) throw error;
+      messageField.value = '';
+      lastLoaded = 0;
+      await loadGuestbook(true);
+      status.textContent = 'Message posted! Other investigators can now read it.';
+    } catch (error) {status.textContent = 'Could not post: ' + error.message;}
+    finally {posting = false; submit.disabled = !currentUser;}
   });
-  window.addEventListener('edo:archive-unlocked',unlock);
-  // Also supports the existing FILE 004 access port (and future archive UI).
-  const unsealed=document.getElementById('unsealed');
-  if(unsealed){
-    const observer=new MutationObserver(()=>{if(!unsealed.hidden)unlock();});
-    observer.observe(unsealed,{attributes:true,attributeFilter:['hidden']});
-    if(!unsealed.hidden)unlock();
-  }
-  window.addEventListener('edo:signed-out',()=>{clearTimers();activeAccountId=null;user=null;toast.hidden=true;chat.hidden=true;state={...defaults,lines:[]};render();syncInput();});
-  window.addEventListener('edo:authenticated',event=>{
-    const nextUser=event.detail?.user;
-    if(!nextUser?.id)return;
-    user=nextUser;
-    if(activeAccountId===nextUser.id)return;
-    // K.R. history belongs to the investigator, not the shared browser.
-    clearTimers();
-    activeAccountId=nextUser.id;
-    const accountKey=`${storageKey}:user:${activeAccountId}`;
-    const stored=localStorage.getItem(accountKey);
-    const remote=nextUser.user_metadata?.kr_chat_state_v2;
-    state=stored ? load(accountKey) : (remote && Array.isArray(remote.lines) ?
-      {...defaults,...remote,lines:remote.lines.slice(-80)} : {...defaults,lines:[]});
-    toast.hidden=true;
-    chat.hidden=true;
-    render();syncInput();
-    // New accounts get the welcome even when an older account used this browser.
-    if(!state.introNotified)later(startIntro,450);
-    else if(state.archiveUnlocked&&!state.archiveNotified)later(startArchive,450);
+  refreshButton.addEventListener('click', () => {lastLoaded = 0;loadGuestbook(true);});
+  window.addEventListener('hashchange', () => setTimeout(syncGuestbook, 0));
+  if (client) client.auth.onAuthStateChange(() => {
+    lastLoaded = 0;
+    if (location.hash === '#guestbook') setTimeout(() => loadGuestbook(true), 0);
   });
-  render();syncInput();
-  // Wait until DOM and other scripts settle; the welcome is a public first-visit event.
-  // Welcome is triggered only by the authenticated account event above.
+  else {status.textContent = 'Supabase configuration required.';submit.disabled = true;}
+  window.addEventListener('edo:profile-updated',()=>{lastLoaded=0;loadGuestbook(true);});
+  syncGuestbook();
 })();
 
